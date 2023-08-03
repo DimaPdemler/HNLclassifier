@@ -1,0 +1,35 @@
+# ['event', 'genWeight', 'MET_phi', '1_phi', '1_genPartFlav', '2_phi', '2_genPartFlav', '3_phi', '3_genPartFlav', 'charge_1', 'charge_2', 'charge_3', 'pt_1', 'pt_2', 'pt_3', 'pt_MET', 'eta_1', 'eta_2', 'eta_3', 'mass_1', 'mass_2', 'mass_3', 'deltaphi_12', 'deltaphi_13', 'deltaphi_23', 'deltaphi_1MET', 'deltaphi_2MET', 'deltaphi_3MET',
+#  'deltaphi_1(23)', 'deltaphi_2(13)', 'deltaphi_3(12)', 'deltaphi_MET(12)', 'deltaphi_MET(13)', 'deltaphi_MET(23)', 'deltaphi_1(2MET)', 'deltaphi_1(3MET)', 'deltaphi_2(1MET)', 'deltaphi_2(3MET)', 'deltaphi_3(1MET)', 'deltaphi_3(2MET)', 'deltaeta_12', 'deltaeta_13', 'deltaeta_23', 'deltaeta_1(23)', 'deltaeta_2(13)', 'deltaeta_3(12)', 'deltaR_12', 'deltaR_13', 'deltaR_23', 'deltaR_1(23)', 'deltaR_2(13)', 'deltaR_3(12)',
+#  'pt_123', 'mt_12', 'mt_13', 'mt_23', 'mt_1MET', 'mt_2MET', 'mt_3MET', 'mt_1(23)', 'mt_2(13)', 'mt_3(12)', 'mt_MET(12)', 'mt_MET(13)', 'mt_MET(23)', 'mt_1(2MET)', 'mt_1(3MET)', 'mt_2(1MET)', 'mt_2(3MET)', 'mt_3(1MET)', 'mt_3(2MET)', 'mass_12', 'mass_13', 'mass_23', 'mass_123', 'Mt_tot', 'HNL_CM_angle_with_MET_1', 'HNL_CM_angle_with_MET_2', 'W_CM_angle_to_plane_1', 'W_CM_angle_to_plane_2', 'W_CM_angle_to_plane_with_MET_1',
+#  'W_CM_angle_to_plane_with_MET_2', 'HNL_CM_mass_1', 'HNL_CM_mass_2', 'HNL_CM_mass_with_MET_1', 'HNL_CM_mass_with_MET_2', 'W_CM_angle_12', 'W_CM_angle_13', 'W_CM_angle_23', 'W_CM_angle_1MET', 'W_CM_angle_2MET', 'W_CM_angle_3MET', 'n_tauh', 'norm_mt_1(23)', 'norm_mt_2(13)', 'norm_mt_3(12)', 'norm_mt_MET(12)', 'norm_mt_MET(13)', 'norm_mt_MET(23)', 'norm_mt_1(2MET)', 'norm_mt_1(3MET)', 'norm_mt_2(1MET)', 'norm_mt_2(3MET)', 'norm_mt_3(1MET)', 'norm_mt_3(2MET)', 'norm_mt_12', 'norm_mt_13', 'norm_mt_23']
+cuts:
+  mt_1(23):
+    lower_percentile: 0.03
+    upper_percentile: 99.7
+  mt_2(13):
+    lower_percentile: 0.03
+    upper_percentile: 99.7
+
+do_not_cut:
+  - event
+  - genWeight
+  - MET_phi
+  - 1_genPartFlav
+  - 1_phi
+  - 2_phi
+  - 2_genPartFlav
+  - 3_phi
+  - 3_genPartFlav
+  - charge_1
+  - charge_2
+  - charge_3
+  - pt_1
+  - pt_2
+  - pt_3
+  - pt_MET
+  - eta_1
+  - eta_2
+  - eta_3
+  - mass_1
+  - mass_2
+  - mass_3
