@@ -13,6 +13,7 @@ from scipy.optimize import brentq
 from functools import reduce
 from operator import iconcat
 from numbers import Number
+from pandas import DataFrame
 # import yaml
 
 # Global variables
@@ -827,3 +828,75 @@ def RandomGenerate_count_tauh(genPartFlavs_1, genPartFlavs_2, genPartFlavs_3):
         n_tauh = n_tauh.tolist()
     
     return n_tauh 
+
+
+def split_dataset(data, ratio_train = 0.75, shuffle = True, print_sizes = True):
+    """
+    Input : 
+        - data : dictionnary containing the variables of interest for each event
+        - ratio_train : percentage of train + validation events going in the train dataset
+        - shuffle : if True, the training and validation set are shuffled
+    Output :
+        - data_train : training dataset as pandas dataframe
+        - data_val : validation dataset as pandas dataframe
+        - data_test : test dataset as pandas dataframe
+        - data_meas : measurement dataset as pandas dataframe
+    """
+    df = DataFrame.from_dict(data)
+
+    data_tv = df.query("(event % 4 == 0) or (event % 4 == 1)")
+    data_test = df.query("event % 4 == 2").reset_index(drop=True)
+    data_meas = df.query("event % 4 == 3").reset_index(drop=True)
+
+    if shuffle:
+        data_tv = data_tv.sample(frac=1).reset_index(drop=True)
+
+    data_train = data_tv.sample(frac = ratio_train)
+    data_val = data_tv.drop(data_train.index)
+
+
+    if print_sizes :
+        N = len(df)
+        print("Total number of events : ", N)
+        print("Train set : {:.2f} %".format(100*len(data_train)/N))
+        print("Validation set : {:.2f} %".format(100*len(data_val)/N))
+        print("Test set : {:.2f} %".format(100*len(data_test)/N))
+        print("Measurement set : {:.2f} %".format(100*len(data_meas)/N))
+
+    return data_train, data_val, data_test, data_meas
+
+def split_dataset2(data, ratio_train = 0.5, ratio_val = 0.1, shuffle = True, print_sizes = True):
+    """
+    Input : 
+        - data : dictionnary containing the variables of interest for each event
+        - ratio_train : percentage of events going in the train dataset
+        - ratio_val : percentage of events going in the validation dataset
+        - shuffle : if True, the training and validation set are shuffled
+    Output :
+        - data_train : training dataset as pandas dataframe
+        - data_val : validation dataset as pandas dataframe
+        - data_test : test dataset as pandas dataframe
+    """
+    df = DataFrame.from_dict(data)
+
+    # Calculate total number of events here
+    N = len(df)
+
+    if shuffle:
+        df = df.sample(frac=1).reset_index(drop=True)
+
+    data_train = df.sample(frac = ratio_train)
+    df = df.drop(data_train.index)
+
+    data_val = df.sample(frac = ratio_val / (1 - ratio_train))
+    data_test = df.drop(data_val.index)
+
+
+    if print_sizes :
+        print("Total number of events : ", N)
+        print("Train set : {:.2f} %".format(100*len(data_train)/N))
+        print("Validation set : {:.2f} %".format(100*len(data_val)/N))
+        print("Test set : {:.2f} %".format(100*len(data_test)/N))
+
+    return data_train, data_val, data_test
+

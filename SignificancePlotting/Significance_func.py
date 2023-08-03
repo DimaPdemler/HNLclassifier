@@ -1,3 +1,7 @@
+import sys
+sys.path.append('../utils/')
+sys.path.append('../DNN/')
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +10,7 @@ from copy import deepcopy
 import torch
 from tqdm import tqdm
 import pickle
-from DD_DNN_models import DNN_flexible
+from DNN_models import DNN_flexible
 from torch import load
 
 

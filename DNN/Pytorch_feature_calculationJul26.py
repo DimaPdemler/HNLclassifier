@@ -3,12 +3,15 @@ import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
 from copy import deepcopy
-
+import yaml
 import os
 import pickle
 from pytorch2python import create_data_loaders, create_test_loader, train_model, test_model
-from DD_DNN_models import DNN_bestFeature, DNN_flexible
+from DNN_models import DNN_bestFeature, DNN_flexible
 from torchsummary import summary
+
+import itertools
+from tqdm import tqdm
 
 """
 This module implements a Neural Architecture Search (NAS) algorithm for fully 
@@ -37,37 +40,57 @@ and scaler_path (the path of the saved data scaler file used for feature normali
 
 
 
+with open("dnnconfig.yml", 'r') as stream:
+    config = yaml.safe_load(stream)
 
+hidden_layer_configs = config['hidden_layer_configs']
+save_folder = config['save_folder']
+save_name = config['save_name']
+scaler_filename = config['scaler_filename']
+selectionlonger = config['selectionlonger']
+model_info_list_name = config['model_info_list_name']
+train_data_name = config['train_data_name']
+val_data_name = config['val_data_name']
+test_data_name = config['test_data_name']
+# train_data_name = config['train_data_name'] if config.get('train_data_name') is not None else 'TEST10_train_aug3'
+# val_data_name = config['val_data_name'] if config.get('val_data_name') is not None else 'TEST10_val_aug3'
+# test_data_name = config['test_data_name'] if config.get('test_data_name') is not None else 'TEST10_test_aug3'
+
+
+current_dir = os.getcwd()
+parent_dir = os.path.dirname(current_dir)
 
 # Data loading part
-cdpath="/home/ddemler/dmitri_stuff/"
+# cdpath="/home/ddemler/dmitri_stuff/"
+cdpath=os.path.join(parent_dir, 'saved_files', 'extracted_data')
+# cdpath="/home/ddemler/HNLclassifier/saved_files/extracted_data/"
 
-train = pd.read_pickle(cdpath + 'extracted_data/TEST10_v4_train_DD2')
-val = pd.read_pickle(cdpath + 'extracted_data/TEST10_v4_val_DD2')
-test = pd.read_pickle(cdpath + 'extracted_data/TEST10_v4_test_DD2')
+train = pd.read_pickle(cdpath + '/'+ train_data_name)
+val = pd.read_pickle(cdpath + '/'+ val_data_name)
+test = pd.read_pickle(cdpath + '/'+ test_data_name)
 
-selectionlonger = ['charge_1', 'charge_2', 'charge_3', 'pt_1',
-       'pt_2', 'pt_3', 'pt_MET', 'eta_1', 'eta_2', 'eta_3', 'mass_1', 'mass_2',
-       'mass_3', 'deltaphi_12', 'deltaphi_13', 'deltaphi_23', 'deltaphi_1MET',
-       'deltaphi_2MET', 'deltaphi_3MET', 'deltaphi_1(23)', 'deltaphi_2(13)',
-       'deltaphi_3(12)', 'deltaphi_MET(12)', 'deltaphi_MET(13)',
-       'deltaphi_MET(23)', 'deltaphi_1(2MET)', 'deltaphi_1(3MET)',
-       'deltaphi_2(1MET)', 'deltaphi_2(3MET)', 'deltaphi_3(1MET)',
-       'deltaphi_3(2MET)', 'deltaeta_12', 'deltaeta_13', 'deltaeta_23',
-       'deltaeta_1(23)', 'deltaeta_2(13)', 'deltaeta_3(12)', 'deltaR_12',
-       'deltaR_13', 'deltaR_23', 'deltaR_1(23)', 'deltaR_2(13)',
-       'deltaR_3(12)', 'pt_123', 'mt_12', 'mt_13', 'mt_23', 'mt_1MET',
-       'mt_2MET', 'mt_3MET', 'mt_1(23)', 'mt_2(13)', 'mt_3(12)', 'mt_MET(12)',
-       'mt_MET(13)', 'mt_MET(23)', 'mt_1(2MET)', 'mt_1(3MET)', 'mt_2(1MET)',
-       'mt_2(3MET)', 'mt_3(1MET)', 'mt_3(2MET)', 'mass_12', 'mass_13',
-       'mass_23', 'mass_123', 'Mt_tot', 'HNL_CM_angle_with_MET_1',
-       'HNL_CM_angle_with_MET_2', 'W_CM_angle_to_plane_1',
-       'W_CM_angle_to_plane_2', 'W_CM_angle_to_plane_with_MET_1',
-       'W_CM_angle_to_plane_with_MET_2', 'HNL_CM_mass_1', 'HNL_CM_mass_2',
-       'HNL_CM_mass_with_MET_1', 'HNL_CM_mass_with_MET_2', 'W_CM_angle_12',
-       'W_CM_angle_13', 'W_CM_angle_23', 'W_CM_angle_1MET', 'W_CM_angle_2MET',
-       'W_CM_angle_3MET', 'n_tauh', 'signal_label',
-       'mass_hyp', 'weightNorm']
+# selectionlonger = ['charge_1', 'charge_2', 'charge_3', 'pt_1',
+#        'pt_2', 'pt_3', 'pt_MET', 'eta_1', 'eta_2', 'eta_3', 'mass_1', 'mass_2',
+#        'mass_3', 'deltaphi_12', 'deltaphi_13', 'deltaphi_23', 'deltaphi_1MET',
+#        'deltaphi_2MET', 'deltaphi_3MET', 'deltaphi_1(23)', 'deltaphi_2(13)',
+#        'deltaphi_3(12)', 'deltaphi_MET(12)', 'deltaphi_MET(13)',
+#        'deltaphi_MET(23)', 'deltaphi_1(2MET)', 'deltaphi_1(3MET)',
+#        'deltaphi_2(1MET)', 'deltaphi_2(3MET)', 'deltaphi_3(1MET)',
+#        'deltaphi_3(2MET)', 'deltaeta_12', 'deltaeta_13', 'deltaeta_23',
+#        'deltaeta_1(23)', 'deltaeta_2(13)', 'deltaeta_3(12)', 'deltaR_12',
+#        'deltaR_13', 'deltaR_23', 'deltaR_1(23)', 'deltaR_2(13)',
+#        'deltaR_3(12)', 'pt_123', 'mt_12', 'mt_13', 'mt_23', 'mt_1MET',
+#        'mt_2MET', 'mt_3MET', 'mt_1(23)', 'mt_2(13)', 'mt_3(12)', 'mt_MET(12)',
+#        'mt_MET(13)', 'mt_MET(23)', 'mt_1(2MET)', 'mt_1(3MET)', 'mt_2(1MET)',
+#        'mt_2(3MET)', 'mt_3(1MET)', 'mt_3(2MET)', 'mass_12', 'mass_13',
+#        'mass_23', 'mass_123', 'Mt_tot', 'HNL_CM_angle_with_MET_1',
+#        'HNL_CM_angle_with_MET_2', 'W_CM_angle_to_plane_1',
+#        'W_CM_angle_to_plane_2', 'W_CM_angle_to_plane_with_MET_1',
+#        'W_CM_angle_to_plane_with_MET_2', 'HNL_CM_mass_1', 'HNL_CM_mass_2',
+#        'HNL_CM_mass_with_MET_1', 'HNL_CM_mass_with_MET_2', 'W_CM_angle_12',
+#        'W_CM_angle_13', 'W_CM_angle_23', 'W_CM_angle_1MET', 'W_CM_angle_2MET',
+#        'W_CM_angle_3MET', 'n_tauh', 'signal_label',
+#        'mass_hyp', 'weightNorm']
 
 train_loader, val_loader, scaler = create_data_loaders(train, val, selectionlonger)
 test_loader = create_test_loader(test, selectionlonger, scaler)
@@ -85,17 +108,18 @@ model = DNN_bestFeature(features).to(device)
 criterion = nn.BCELoss(reduction='none')
 optimizer = optim.Adam(model.parameters())
 
-save_path = os.path.join(cdpath, 'saved_models/', 'simple_dnn', 'NAS1')
-save_name = '/simple1_nelsonnorm3_depth4_1000epochs'
+# save_path = os.path.join(cdpath, 'saved_models/', 'simple_dnn', 'NAS1')
 
-import itertools
-from tqdm import tqdm
+save_path=os.path.join(parent_dir, 'saved_files', 'saved_models', save_folder)
+os.makedirs(save_path, exist_ok=True)
+save_name = '/'+save_name
+
 
 
 
 model_info_list=pd.DataFrame()
 # hidden_layer_configs = [[10], [20], [10, 10], [20, 10], [30, 20], [40, 20], [60, 20], [30, 20, 10], [50, 40, 20], [50, 30, 10], [40,20,10], [50,50,40], [40, 10,5], [60,30,20,10], [50,40,30,20]]
-hidden_layer_configs = [[20],[30],[40],[50],[10,10],[20,10],[20,10],[30,10],[40,10],[60,20],[50,20],[30,10]]
+# hidden_layer_configs = [[20],[30],[40],[50],[10,10],[20,10],[20,10],[30,10],[40,10],[60,20],[50,20],[30,10]]
 
 input_vars = selectionlonger
 
@@ -113,30 +137,33 @@ for i, hidden_layer_sizes in pbar:
     
     # summary(model, (len(input_vars),))
 
-    save_path = os.path.join(cdpath, 'saved_models/', 'simple_dnn', 'NAS3')
-    save_name = '/DNN_saved'+str(i+1)
+    save_path=os.path.join(parent_dir, 'saved_files', 'saved_models', save_folder)
+    scaler_save_path=os.path.join(save_path, 'scalers')
+    os.makedirs(scaler_save_path, exist_ok=True)
+    save_nameiter = save_name+str(i+1)
 
-    scaler_filename = f'scaler_FeatureSearch.pkl' 
+    # scaler_filename = f'scaler_FeatureSearch.pkl' 
     # scaler_filename = f'scaler_FeatureSearch_{i}.pkl' 
-    with open(os.path.join(save_path, scaler_filename), 'wb') as f:
+    scaler_filename_iter=scaler_filename+str(i+1)
+    with open(os.path.join(scaler_save_path, scaler_filename_iter), 'wb') as f:
         pickle.dump(scaler, f)
 
     # Train the model
-    model = train_model(train_loader, val_loader, model, optimizer, criterion, device, save_path, save_name, epochs=1000)
+    model = train_model(train_loader, val_loader, model, optimizer, criterion, device, save_path, save_nameiter, epochs=1000)
     # model = train_model(train_loader, val_loader, model, optimizer, criterion, device, save_path, save_name, epochs=4)
 
     pbar.set_description(desc)
     # Append info to the list
     new_row = pd.DataFrame({
     'save_path': [save_path], 
-    'save_name': [save_name], 
+    'save_name': [save_nameiter], 
     'model_info': [str(model)], 
     'input_variables': [input_vars], 
     'hidden_layers': [hidden_layer_sizes],
-    'scaler_path': [os.path.join(save_path, scaler_filename)]
+    'scaler_path': [os.path.join(scaler_save_path, scaler_filename_iter)]
     })
     
 
     model_info_list = pd.concat([model_info_list, new_row], ignore_index=True)
 
-model_info_list.to_pickle(save_path + '/model_info_list3.pkl')
+model_info_list.to_pickle(save_path + '/' + model_info_list_name)
