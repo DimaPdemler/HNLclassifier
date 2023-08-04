@@ -89,9 +89,11 @@ def process_channels(channels, flat_features, path, relative_path, data):
     dict: A dictionary with the described structure.
     """
     All_channel_dict = {}
+    pbar = tqdm(channels)
 
-    for channel in channels:
-        print(channel)
+    for channel in pbar:
+        pbar.set_description(f"Processing {channel}")
+        # print(channel)
 
         # Initialize data extractor
         extractor = Data_extractor_v4(channel)
@@ -389,7 +391,7 @@ def binmaker_rightleft(channel_specific_dict, xvariable, masshyp, X=0.3,  plot=F
     background_error=np.sqrt(np.array(background_weights_squared_list))
     return bin_indices, signal_height, background_height, np.flip(signal_error), np.flip(background_error)
 
-def get_dnn_score_dict_torch_simple(data_dict_dnn, model_name, model_class, path, vars_list,masshyp, scaler=None):
+def get_dnn_score_dict_torch_simple(data_dict_dnn, model_class, vars_list,masshyp, scaler=None):
     """
     Given a dictionary containing data for various channels and a deep learning model, this method computes the model's
     scores for each event (particle collision). The method also modifies the original dictionary to 
@@ -420,7 +422,6 @@ def get_dnn_score_dict_torch_simple(data_dict_dnn, model_name, model_class, path
 
    
     model=model_class
-    # model.load_state_dict(torch.load(path+model_name))
     model.eval()
 
     for channel in  tqdm(dict_copy.keys(), desc='channel', disable=True):
@@ -549,7 +550,7 @@ def find_significance2(data, channels, xvariable, masshyp, model_name, model_cla
     significance_pd=pd.DataFrame(columns=channels)
     uncertainty_pd=pd.DataFrame(columns=channels)
 
-    dnn_score_dict=get_dnn_score_dict_torch_simple(data, model_name, model_class, path, vars_list,masshyp, scaler=scaler)
+    dnn_score_dict=get_dnn_score_dict_torch_simple(data,model_class, vars_list,masshyp, scaler=scaler)
     
     for channel in tqdm(channels, desc='channel find_significance2, masshyp:' + str(masshyp), disable=True):
         try:
