@@ -1,6 +1,6 @@
 # README for HNLclassifier Repository
 
-This repository is dedicated to the study of Heavy Neutral Leptons (HNLs) decaying to three leptons at CMS. The study specifically targets events with at least one hadronically decayed \\(\tau\\) (\\(\tau_h\\)) among the three final-state leptons.
+This repository is dedicated to the study of Heavy Neutral Leptons (HNLs) decaying to three leptons at CMS. The study specifically targets events with at least one hadronically decayed tau(tau_h) among the three final-state leptons.
 
 The project aims to contribute to the field of particle physics, particularly in the search for new physics "Beyond the Standard Model" (BSM). Observations such as neutrino oscillation and mass suggest that there are physical phenomena yet to be fully understood within the framework of the Standard Model. Explorations in this repository could help elucidate these phenomena and contribute to the development of theories that provide a more complete understanding of the universe's fundamental particles and forces.
 
