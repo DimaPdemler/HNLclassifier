@@ -7,8 +7,8 @@ cuts:
     lower_percentile: 0.03
     upper_percentile: 99.7
   mt_2(13):
-    lower_percentile: 0.03
-    upper_percentile: 99.7
+    lower_percentile: 0.04
+    upper_percentile: 99.6
 
 do_not_cut:
   - event
@@ -33,3 +33,4 @@ do_not_cut:
   - mass_1
   - mass_2
   - mass_3
+
