@@ -528,19 +528,16 @@ class Data_generator():
 
         for _ in range(num_samples):
             sample = {}
-            # Generate values for raw_vars_general
             for var in self.raw_vars_general:
-                # You need to adjust the parameters of the random functions based on the actual distributions
                 if var == 'event':
-                    sample[var] = np.random.randint(0, 10000)  # Assuming 'event' is a discrete variable ranging from 0 to 10000
+                    sample[var] = np.random.randint(0, 10000) 
                 elif var == 'genWeight':
-                    sample[var] = np.random.uniform(-1, 1)  # Assuming 'genWeight' is a continuous variable ranging from -1 to 1
+                    sample[var] = np.random.uniform(-1, 1) 
                 elif var == 'MET_pt':
                     sample[var] = generate_random_data(pt_dict['pt_MET'][0], pt_dict['pt_MET'][1])
                 elif var == 'MET_phi':
                     sample[var] = np.random.uniform(-np.pi, np.pi)  # Assuming 'MET_phi' ranges from -pi to pi
             
-            # Generate values for raw_vars_lepton1, raw_vars_lepton2, and raw_vars_lepton3
             eta_low, eta_high = -2.5, 2.5
             mass_low, mass_high = 0, 11
             phi_low, phi_high = -np.pi, np.pi
@@ -562,7 +559,6 @@ class Data_generator():
                 sample[f'{i}_pt'] = pt
                 sample[f'{i}_charge'] = charge
                 sample[f'{i}_genPartFlav'] = genPartFlav
-            # the same raw_vars_general and raw_vars_lepton code as before
             if sample['1_charge']== sample['2_charge'] == sample['3_charge']:
                 numflip = np.random.randint(1,4)
                 sample[f'{numflip}_charge'] = -sample[f'{numflip}_charge']
@@ -580,15 +576,11 @@ class Data_generator():
             for key, value in sample.items():
                 data[key].append(value)
 
-        # Now that you've generated all your samples and collected lists of input variables, apply your functions
         for i, func in enumerate(self.functions):
-            # print("run function", i)
             if func is not None:
-                # Assemble inputs for the function
                 func_inputs = [np.array(call_dict_with_list(inputs, var)) for var in self.input_vars[i]]
 
 
-                # Apply function
                 func_outputs = func(*func_inputs)
 
                 # Add outputs to data
