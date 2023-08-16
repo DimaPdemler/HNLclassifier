@@ -1,0 +1,13 @@
+activation_fn_list:
+- relu
+hidden_layers_list:
+- - 32
+  - 42
+  - 52
+  - 64
+  - 74
+  - 82
+  - 74
+  - 64
+  - 64
+  - 50

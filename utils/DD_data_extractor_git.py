@@ -14,6 +14,12 @@ from functools import reduce
 from operator import iconcat
 from numbers import Number
 from pandas import DataFrame
+from tqdm import tqdm
+from concurrent.futures import ProcessPoolExecutor
+import os
+
+np.random.seed(39)
+
 # import yaml
 
 # Global variables
@@ -480,7 +486,7 @@ class Data_generator():
 			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
 			        [ '1_genPartFlav', '2_genPartFlav', '3_genPartFlav']]
 			        # ['channel', '1_genPartFlav', '2_genPartFlav', '3_genPartFlav']]
-        self.data = self.generate_fake_data(numevents)
+        self.data = self.generate_fake_data2(numevents)
         old_keys = [f"{i}_{var}" for i in range(1, 4) for var in ['charge', 'pt', 'eta', 'mass']] + ['MET_pt']
         new_keys = [f"{var}_{i}" for i in range(1, 4) for var in ['charge', 'pt', 'eta', 'mass']] + ['pt_MET']
 
@@ -500,9 +506,129 @@ class Data_generator():
     def getData(self):
         return self.data
     
+    @staticmethod
+    def worker(instance, start, end):
+        data_chunk={var: [] for var in (instance.raw_vars_general + [f'{i}_{var}' for i in range(1, 4) for var in ['eta', 'mass', 'phi', 'pt', 'charge', 'genPartFlav']] + instance.flat_output_vars)}
 
-    
+        genPartFlav_options = [1,2,3,4]  # Define the possible values for genPartFlav
 
+        inputs_chunk= {var: [] for sublist in instance.input_vars for var in (sublist if isinstance(sublist[0], str) else sublist[0])}
+        pt_dict={'pt_1': [0.02536545873792836, 0.4934279110259645], 'pt_2': [0.019151151336495566, 0.3995434049215345], 'pt_3': [0.023038543045718854, 0.31375795899486003], 'pt_MET': [0.014081741982300087, 0.13542242088536358]}
+
+        for i in range(start, end):
+            sample = {}
+            for var in instance.raw_vars_general:
+                if var == 'event':
+                    sample[var] = np.random.randint(0, 10000) 
+                elif var == 'genWeight':
+                    sample[var] = np.random.uniform(-1, 1) 
+                elif var == 'MET_pt':
+                    sample[var] = generate_random_data(pt_dict['pt_MET'][0], pt_dict['pt_MET'][1])
+                elif var == 'MET_phi':
+                    sample[var] = np.random.uniform(-np.pi, np.pi)  # Assuming 'MET_phi' ranges from -pi to pi
+            eta_low, eta_high = -2.5, 2.5
+            mass_low, mass_high = 0, 11
+            phi_low, phi_high = -np.pi, np.pi
+            # pt_low, pt_high = 0, 1000
+
+
+            for i in range(1, 4):  # For three leptons
+                eta = np.random.uniform(low=eta_low, high=eta_high)
+                mass = np.random.uniform(low=mass_low, high=mass_high)
+                phi = np.random.uniform(low=phi_low, high=phi_high)
+                # pt = np.random.uniform(low=pt_low, high=pt_high)
+                pt=generate_random_data(pt_dict[f'pt_{i}'][0], pt_dict[f'pt_{i}'][1])
+                charge = np.random.choice([1, -1])
+                genPartFlav = np.random.choice(genPartFlav_options)
+
+                sample[f'{i}_eta'] = eta
+                sample[f'{i}_mass'] = mass
+                sample[f'{i}_phi'] = phi
+                sample[f'{i}_pt'] = pt
+                sample[f'{i}_charge'] = charge
+                sample[f'{i}_genPartFlav'] = genPartFlav
+            if sample['1_charge']== sample['2_charge'] == sample['3_charge']:
+                numflip = np.random.randint(1,4)
+                sample[f'{numflip}_charge'] = -sample[f'{numflip}_charge']
+            # Initialize empty lists for the output variables
+            # for var in self.output_vars:
+            #     if isinstance(var, list):
+            #         for v in var:
+            #             data[v] = []
+            #     else:
+            #         data[var] = []
+            for key in sample:
+                inputs_chunk[key].append(sample[key])
+
+            for key, value in sample.items():
+                data_chunk[key].append(value)
+
+        return data_chunk, inputs_chunk
+
+    def generate_fake_data2(self, num_samples):
+        self.flat_output_vars=[]
+        for sublist in self.output_vars:
+            if isinstance(sublist, list):
+                for item in sublist:
+                    self.flat_output_vars.append(item)
+            else:
+                self.flat_output_vars.append(sublist)
+        data = {var: [] for var in (self.raw_vars_general + [f'{i}_{var}' for i in range(1, 4) for var in ['eta', 'mass', 'phi', 'pt', 'charge', 'genPartFlav']] + self.flat_output_vars)}
+
+        # data = {var: [] for var in (self.raw_vars_general + [f'{i}_{var}' for i in range(1, 4) for var in ['eta', 'mass', 'phi', 'pt', 'charge', 'genPartFlav']] + self.output_vars)}
+        genPartFlav_options = [1,2,3,4]  # Define the possible values for genPartFlav
+
+        inputs = {var: [] for sublist in self.input_vars for var in (sublist if isinstance(sublist[0], str) else sublist[0])}
+        pt_dict={'pt_1': [0.02536545873792836, 0.4934279110259645], 'pt_2': [0.019151151336495566, 0.3995434049215345], 'pt_3': [0.023038543045718854, 0.31375795899486003], 'pt_MET': [0.014081741982300087, 0.13542242088536358]}
+
+        num_chunks = os.cpu_count()  # or any other number based on your preference
+        if num_chunks > 15: num_chunks = num_chunks - 5
+        print(f'Using {num_chunks} workers')
+        chunk_size = num_samples // num_chunks
+
+        futures = []
+        with ProcessPoolExecutor() as executor:
+            for i in range(num_chunks):
+                start = i * chunk_size
+                end = (i + 1) * chunk_size if i != num_chunks - 1 else num_samples
+                futures.append(executor.submit(self.worker, self, start, end))
+
+
+
+        # Collect results from all workers
+        for future in tqdm(futures, desc='Collecting results'):
+            chunk_data, chunk_inputs = future.result()
+            for key, value in chunk_data.items():
+                data[key].extend(value)
+            for key, value in chunk_inputs.items():
+                inputs[key].extend(value)
+        
+        tq2=tqdm(enumerate(self.functions), desc='Applying functions')
+        for i, func in tq2:
+            if func is not None:
+                func_inputs = [np.array(call_dict_with_list(inputs, var)) for var in self.input_vars[i]]
+
+
+                func_outputs = func(*func_inputs)
+
+                # Add outputs to data
+                if isinstance(self.output_vars[i], list):
+                    for j, v in enumerate(self.output_vars[i]):
+                        if len(data[v]) == 0:
+                            data[v] = func_outputs[j]
+                        else:
+                            data[v] = np.concatenate((data[v], func_outputs[j]))
+                else:
+                    if len(data[self.output_vars[i]]) == 0:
+                        data[self.output_vars[i]] = func_outputs
+                    else:
+                        data[self.output_vars[i]] = np.concatenate((data[self.output_vars[i]], func_outputs))
+        # for key in sample:
+        #     data[key].append(sample[key])
+        
+        for key in data:
+            data[key] = np.array(data[key])
+        return data
 
     def generate_fake_data(self, num_samples):
         # Initialize a dictionary with each key being a variable and each value being an empty list
@@ -525,8 +651,8 @@ class Data_generator():
         inputs = {var: [] for sublist in self.input_vars for var in (sublist if isinstance(sublist[0], str) else sublist[0])}
         pt_dict={'pt_1': [0.02536545873792836, 0.4934279110259645], 'pt_2': [0.019151151336495566, 0.3995434049215345], 'pt_3': [0.023038543045718854, 0.31375795899486003], 'pt_MET': [0.014081741982300087, 0.13542242088536358]}
 
-
-        for _ in range(num_samples):
+        tq = tqdm(range(num_samples), desc='Generating raw data')
+        for j in tq:
             sample = {}
             for var in self.raw_vars_general:
                 if var == 'event':
@@ -575,8 +701,8 @@ class Data_generator():
 
             for key, value in sample.items():
                 data[key].append(value)
-
-        for i, func in enumerate(self.functions):
+        tq2=tqdm(enumerate(self.functions), desc='Applying functions')
+        for i, func in tq2:
             if func is not None:
                 func_inputs = [np.array(call_dict_with_list(inputs, var)) for var in self.input_vars[i]]
 
@@ -611,13 +737,17 @@ class Data_generator():
         for i, feat in enumerate(feat_toadd):
             self.data[feat] = outlier_normalization(self.data['pt_1'], self.data['pt_2'], self.data['pt_3'], self.data['pt_MET'], self.data[feat_orig[i]])
         return
+# def inverted_exponential_cdf(p, lambd, c):
+#     """Inverted exponential cumulative distribution function."""
+#     a = 0
+#     b = 10
+#     while np.sign(exponential_cdf(a, lambd, c) - p) == np.sign(exponential_cdf(b, lambd, c) - p):
+#         b *= 2
+#     return brentq(lambda x: exponential_cdf(x, lambd, c) - p, a, b)
 def inverted_exponential_cdf(p, lambd, c):
     """Inverted exponential cumulative distribution function."""
-    a = 0
-    b = 10
-    while np.sign(exponential_cdf(a, lambd, c) - p) == np.sign(exponential_cdf(b, lambd, c) - p):
-        b *= 2
-    return brentq(lambda x: exponential_cdf(x, lambd, c) - p, a, b)
+    # return (-np.log(1 - p) - c) / lambd
+    return (c - np.log(1 - p)) / lambd
 
 def generate_random_data( lambd, c):
     """Generate random data from the approximate CDF."""
