@@ -206,7 +206,7 @@ def transverse_mass(pt_1, pt_2, phi_1, phi_2):
     """
 
     result = 2.0 * pt_1 * pt_2 * (1.0 - np.cos(phi_1 - phi_2))
-    result[result < 0] = 0.0
+    # result[result < 0] = 0.0
     return np.sqrt(result)
 
 
