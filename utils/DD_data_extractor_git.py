@@ -18,7 +18,8 @@ from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 import os
 
-np.random.seed(39)
+# np.random.seed(39)
+# np.rand
 
 # import yaml
 
@@ -587,6 +588,7 @@ class Data_generator():
         chunk_size = num_samples // num_chunks
 
         futures = []
+        # seeds=[1,2,3,5,6,7]
         with ProcessPoolExecutor() as executor:
             for i in range(num_chunks):
                 start = i * chunk_size
