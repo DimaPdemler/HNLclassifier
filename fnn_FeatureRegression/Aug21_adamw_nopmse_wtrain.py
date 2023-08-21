@@ -18,11 +18,11 @@ from pair_nomet_creation2 import KinematicDataset, EpochSampler
 
 # %%
 modelsavepath='/home/ddemler/HNLclassifier/saved_files/saved_models/FNN_FeatureRegression/fnn_aug18_adamw_nomse.pt'
-pdsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug18_adamw_sm.csv'
-pd_train_savepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug18_nomse2_train.csv'
+pdsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug18_adamw_nomse2.csv'
+pd_train_savepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug18_adamw_nomse2_train.csv'
 
 out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
-tryrel=[ 'mt','mass', 'pt', 'px', 'py', 'pz', 'energy']
+tryrel=[ 'mt', 'pt', 'px', 'py', 'pz', 'energy']
 customlossindices=[idx for idx, feat in enumerate(out_feats) if feat in tryrel]
 
 hidden_layers = [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
@@ -267,7 +267,7 @@ for epoch in range(numepochs):
 
 
     # print(f"epoch: {epoch}, train: {train_loss/len(train_loader):.4e}, val: {valloss.item():.4e}, {loss_summary}")
-    # print("train loss features:", avg_train_featsloss)
+    print("train loss features:", avg_train_featsloss)
     print(f"epoch: {epoch}, train: {train_loss/len(train_loader):.4e}, val: {valloss.item():.4e}")
 
     # valloss=valloss.cpu().float()
