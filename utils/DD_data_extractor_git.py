@@ -36,7 +36,8 @@ output_vars_v4 = ['event', 'genWeight',
                   'charge_1', 'charge_2', 'charge_3', 
                   'pt_1', 'pt_2', 'pt_3', 'pt_MET', 
                   'eta_1', 'eta_2', 'eta_3',
-                  'mass_1', 'mass_2', 'mass_3', 
+                  'mass_1', 'mass_2', 'mass_3',
+                  'phi_1', 'phi_2', 'phi_3',
                   'deltaphi_12', 'deltaphi_13', 'deltaphi_23', 
                   'deltaphi_1MET', 'deltaphi_2MET', 'deltaphi_3MET',
                   ['deltaphi_1(23)', 'deltaphi_2(13)', 'deltaphi_3(12)', 
@@ -369,6 +370,7 @@ class Data_extractor_v4(Data_extractor):
                     None, None, None, None,     # pts
                     None, None, None,           # etas
                     None, None, None,           # masses
+                    None, None, None,          # phis
                     deltaphi, deltaphi, deltaphi, 
                     deltaphi, deltaphi, deltaphi,
                     deltaphi3,
@@ -398,7 +400,8 @@ class Data_extractor_v4(Data_extractor):
 			        ['1_charge'], ['2_charge'], ['3_charge'], 
 			        ['1_pt'], ['2_pt'], ['3_pt'], ['MET_pt'],
 			        ['1_eta'], ['2_eta'], ['3_eta'], 
-			        ['1_mass'], ['2_mass'], ['3_mass'], 
+			        ['1_mass'], ['2_mass'], ['3_mass'],
+                    ['1_phi'], ['2_phi'], ['3_phi'],
 			        ['1_phi', '2_phi'], ['1_phi', '3_phi'], ['2_phi', '3_phi'], 
 			        ['1_phi', 'MET_phi'], ['2_phi', 'MET_phi'], ['3_phi', 'MET_phi'], 
 			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],

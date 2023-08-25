@@ -175,19 +175,15 @@ class KinematicDataset(Dataset):
         # labels=np.vstack((output_half, output_half))
 
         # labels= labels[:,0:2] #! changed to test if still works on small number
-        labels= output_half[:,5:8] #! changed to test if still works on small number
+        # labels= output_half[:,0:2] #! changed to test if still works on small number
 
         # for i in range(output_half.shape[1]):
         #     print("min, max, median, std of index", i, np.min(output_half[:,i]), np.max(output_half[:,i]), np.median(output_half[:,i]), np.std(output_half[:,i]))
 
-
+        labels= output_half
         # labels=output_half[:,5:8] #! changed to test if still works on small number
-        # labels=output_half[:,0:2] #! changed to test if still works on small number
-        
-        
-        # print("labels shape:", labels.shape)
-        # print("data shape:", data.shape)
-        self.output_dim=labels.shape[1]
+
+        self.output_dim=labels.shape[1] #? maybe need output to be *6
         self.input_dim=data.shape[1]
         # # datashape=(numevents*len(pair_input_order),l_input.shape[2]*2)
         # datashape=(int(self.num_events),self.input_dim)

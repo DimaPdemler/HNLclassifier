@@ -1,0 +1,324 @@
+E_1:
+  max: 1000.0
+  min: 10.0
+E_2:
+  max: 1000.0
+  min: 10.0
+E_3:
+  max: 1000.0
+  min: 10.0
+HNL_CM_angle_with_MET_1:
+  max: 3.1416
+  min: 0.0
+HNL_CM_angle_with_MET_2:
+  max: 3.1416
+  min: 0.0
+HNL_CM_mass_1:
+  max: 2000.0
+  min: 10.0
+HNL_CM_mass_2:
+  max: 2000.0
+  min: 10.0
+HNL_CM_mass_with_MET_1:
+  max: 2000.0
+  min: 40.0
+HNL_CM_mass_with_MET_2:
+  max: 2000.0
+  min: 40.0
+Mt_tot:
+  max: 2000.0
+  min: 50.0
+W_CM_angle_12:
+  max: 3.1416
+  min: 0.0
+W_CM_angle_13:
+  max: 3.1416
+  min: 0.0
+W_CM_angle_1MET:
+  max: 3.1416
+  min: 0.0
+W_CM_angle_23:
+  max: 3.1416
+  min: 0.0
+W_CM_angle_2MET:
+  max: 3.1416
+  min: 0.0
+W_CM_angle_3MET:
+  max: 3.1416
+  min: 0.0
+W_CM_angle_to_plane_with_MET_1:
+  max: 1.57
+  min: 0.0
+W_CM_angle_to_plane_with_MET_2:
+  max: 1.57
+  min: 0.0
+deltaR_1(23):
+  max: 5.0
+  min: 0.0
+deltaR_12:
+  max: 5.0
+  min: 0.0
+deltaR_13:
+  max: 5.0
+  min: 0.0
+deltaR_2(13):
+  max: 5.0
+  min: 0.0
+deltaR_23:
+  max: 5.0
+  min: 0.0
+deltaR_3(12):
+  max: 5.0
+  min: 0.0
+deltaeta_1(23):
+  max: 5.0
+  min: 0.0
+deltaeta_12:
+  max: 5.0
+  min: 0.0
+deltaeta_13:
+  max: 5.0
+  min: 0.0
+deltaeta_2(13):
+  max: 5.0
+  min: 0.0
+deltaeta_23:
+  max: 5.0
+  min: 0.0
+deltaeta_3(12):
+  max: 5.0
+  min: 0.0
+deltaphi_1(23):
+  max: 3.1416
+  min: 0.0
+deltaphi_1(2MET):
+  max: 3.1416
+  min: 0.0
+deltaphi_1(3MET):
+  max: 3.1416
+  min: 0.0
+deltaphi_12:
+  max: 3.1416
+  min: 0.0
+deltaphi_13:
+  max: 3.1416
+  min: 0.0
+deltaphi_1MET:
+  max: 3.1416
+  min: 0.0
+deltaphi_2(13):
+  max: 3.1416
+  min: 0.0
+deltaphi_2(1MET):
+  max: 3.1416
+  min: 0.0
+deltaphi_2(3MET):
+  max: 3.1416
+  min: 0.0
+deltaphi_23:
+  max: 3.1416
+  min: 0.0
+deltaphi_2MET:
+  max: 3.1416
+  min: 0.0
+deltaphi_3(12):
+  max: 3.1416
+  min: 0.0
+deltaphi_3(1MET):
+  max: 3.1416
+  min: 0.0
+deltaphi_3(2MET):
+  max: 3.1416
+  min: 0.0
+deltaphi_3MET:
+  max: 3.1416
+  min: 0.0
+deltaphi_MET(12):
+  max: 3.1416
+  min: 0.0
+deltaphi_MET(13):
+  max: 3.1416
+  min: 0.0
+deltaphi_MET(23):
+  max: 3.1416
+  min: 0.0
+mass_1:
+  max: 4.0
+  min: 0.1
+mass_12:
+  max: 2000.0
+  min: 10.0
+mass_123:
+  max: 2000.0
+  min: 50.0
+mass_13:
+  max: 2000.0
+  min: 10.0
+mass_2:
+  max: 4.0
+  min: 0.1
+mass_23:
+  max: 2000.0
+  min: 10.0
+mass_3:
+  max: 4.0
+  min: 0.1
+moth_E_12:
+  max: 2000.0
+  min: 20.0
+moth_E_13:
+  max: 2000.0
+  min: 20.0
+moth_E_23:
+  max: 2000.0
+  min: 20.0
+moth_eta_12:
+  max: 5.0
+  min: -5.0
+moth_eta_13:
+  max: 5.0
+  min: -5.0
+moth_eta_23:
+  max: 5.0
+  min: -5.0
+moth_mass_12:
+  max: 2000.0
+  min: 10.0
+moth_mass_13:
+  max: 2000.0
+  min: 10.0
+moth_mass_23:
+  max: 2000.0
+  min: 10.0
+moth_phi_12:
+  max: 3.1416
+  min: -3.1416
+moth_phi_13:
+  max: 3.1416
+  min: -3.1416
+moth_phi_23:
+  max: 3.1416
+  min: -3.1416
+moth_pt_12:
+  max: 1000.0
+  min: 0.0
+moth_pt_13:
+  max: 1000.0
+  min: 0.0
+moth_pt_23:
+  max: 1000.0
+  min: 0.0
+moth_px_12:
+  max: 2000.0
+  min: -2000.0
+moth_px_13:
+  max: 2000.0
+  min: -2000.0
+moth_px_23:
+  max: 2000.0
+  min: -2000.0
+moth_py_12:
+  max: 2000.0
+  min: -2000.0
+moth_py_13:
+  max: 2000.0
+  min: -2000.0
+moth_py_23:
+  max: 2000.0
+  min: -2000.0
+moth_pz_12:
+  max: 2000.0
+  min: -2000.0
+moth_pz_13:
+  max: 2000.0
+  min: -2000.0
+moth_pz_23:
+  max: 2000.0
+  min: -2000.0
+mt_1(23):
+  max: 2000.0
+  min: 0.0
+mt_1(2MET):
+  max: 2000.0
+  min: 0.0
+mt_1(3MET):
+  max: 2000.0
+  min: 0.0
+mt_12:
+  max: 2000.0
+  min: 0.0
+mt_13:
+  max: 2000.0
+  min: 0.0
+mt_1MET:
+  max: 2000.0
+  min: 0.0
+mt_2(13):
+  max: 2000.0
+  min: 0.0
+mt_2(1MET):
+  max: 2000.0
+  min: 0.0
+mt_2(3MET):
+  max: 2000.0
+  min: 0.0
+mt_23:
+  max: 2000.0
+  min: 0.0
+mt_2MET:
+  max: 2000.0
+  min: 0.0
+mt_3(12):
+  max: 2000.0
+  min: 0.0
+mt_3(1MET):
+  max: 2000.0
+  min: 0.0
+mt_3(2MET):
+  max: 2000.0
+  min: 0.0
+mt_3MET:
+  max: 2000.0
+  min: 0.0
+mt_MET(12):
+  max: 2000.0
+  min: 0.0
+mt_MET(13):
+  max: 2000.0
+  min: 0.0
+mt_MET(23):
+  max: 2000.0
+  min: 0.0
+pt_123:
+  max: 1000.0
+  min: 1.0
+px_1:
+  max: 1000.0
+  min: -1000.0
+px_2:
+  max: 1000.0
+  min: -1000.0
+px_3:
+  max: 1000.0
+  min: -1000.0
+py_1:
+  max: 1000.0
+  min: -1000.0
+py_2:
+  max: 1000.0
+  min: -1000.0
+py_3:
+  max: 1000.0
+  min: -1000.0
+pz_1:
+  max: 1000.0
+  min: -1000.0
+pz_2:
+  max: 1000.0
+  min: -1000.0
+pz_3:
+  max: 1000.0
+  min: -1000.0
+E_tot:
+  max: 4000.0
+  min: 50.0

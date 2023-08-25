@@ -14,20 +14,29 @@ from tqdm import tqdm
 import sys
 sys.path.append('../FakeDatasetMaking/')
 # from pair_nomet_creation2 import KinematicDataset, EpochSampler
-from pair_nomet_creation_temp import KinematicDataset, EpochSampler
+from pair_nomet_creation_aug21 import KinematicDataset, EpochSampler
 
 
 # %%
-modelsavepath='/home/ddemler/HNLclassifier/saved_files/saved_models/FNN_FeatureRegression/fnn_aug18_adamw_nomse.pt'
-pdsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug18_adamw_nomse2.csv'
-pd_train_savepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug21_adamw_nomse2_train.csv'
+modelsavepath='/home/ddemler/HNLclassifier/saved_files/saved_models/FNN_FeatureRegression/aug22_alldata_p3_relu.pt'
+
+pdsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/aug22_alldata_p3_relu.csv'
+# pd_train_savepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug21_3.csv'
 
 out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+
+
+# out_feats=out_feats[5:8]
+
 tryrel=[ 'mt','mass', 'pt', 'px', 'py', 'pz', 'energy']
 customlossindices=[idx for idx, feat in enumerate(out_feats) if feat in tryrel]
 
+
+
+
+
 # hidden_layers = [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
-hidden_layers = [64 for i in range(20)]
+hidden_layers = [72 for i in range(20)]
 
 
 
@@ -41,7 +50,7 @@ input_dim, output_dim = train_dataset.usefulvariables()
 
 train_sampler = EpochSampler(train_dataset)
 
-train_loader = DataLoader(train_dataset, batch_size=320, sampler=train_sampler)
+train_loader = DataLoader(train_dataset, batch_size=320, sampler=train_sampler, num_workers=4)
 
 
 # %%
@@ -50,48 +59,113 @@ input_dim, output_dim = val_dataset.usefulvariables()
 
 val_sampler = EpochSampler(val_dataset)
 
-val_loader = DataLoader(val_dataset, batch_size=320, sampler=val_sampler)
+val_loader = DataLoader(val_dataset, batch_size=320, sampler=val_sampler, num_workers=4)
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-class KinematicNet(nn.Module):
-    def __init__(self):
-        super(KinematicNet, self).__init__()
-        self.fc1 = nn.Linear(input_dim, int(input_dim*1.5))
-        self.fc2 = nn.Linear(int(input_dim*1.5), int(input_dim//3))
-        self.fc3 = nn.Linear(int(input_dim//3), output_dim)
+
+
+# class CustomKinematicNet(nn.Module):
+#     def __init__(self, input_size, hidden_layers, lenoutput, activation_fn=F.relu):
+#         """
+#         Args:
+#         - input_size (int): Size of the input layer.
+#         - hidden_layers (list of int): Sizes of each hidden layer.
+#         - lenoutput (int): Size of the output layer.
+#         - activation_fn (callable): Activation function to use.
+#         """
+#         super(CustomKinematicNet, self).__init__()
         
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return self.fc3(x)
+#         # Create the list of layers
+#         layers = [nn.Linear(input_size, hidden_layers[0])]
+#         for i in range(len(hidden_layers) - 1):
+#             layers.append(nn.Linear(hidden_layers[i], hidden_layers[i + 1]))
+#         layers.append(nn.Linear(hidden_layers[-1], lenoutput))
+        
+#         self.layers = nn.ModuleList(layers)
+#         self.activation_fn = activation_fn
+        
+#     def forward(self, x):
+#         for layer in self.layers[:-1]:
+#             x = self.activation_fn(layer(x))
+#         return self.layers[-1](x)
+
+
+# class CustomKinematicNet(nn.Module):
+#     def __init__(self, input_size, hidden_layers, lenoutput, activation_fn=F.relu):
+#         """
+#         Args:
+#         - input_size (int): Size of the input layer.
+#         - hidden_layers (list of int): Sizes of each hidden layer.
+#         - lenoutput (int): Size of the output layer.
+#         - activation_fn (callable): Activation function to use.
+#         """
+#         super(CustomKinematicNet, self).__init__()
+        
+#         # Create the list of layers
+#         layers = [nn.Linear(input_size, hidden_layers[0])]
+#         for i in range(len(hidden_layers) - 1):
+#             # Adjusting the input sizes for concatenation
+#             layers.append(nn.Linear(hidden_layers[i] + input_size, hidden_layers[i + 1]))
+#             # layers.append(nn.Linear(hidden_layers[i] + input_size, hidden_layers[i + 1]))
+#         layers.append(nn.Linear(hidden_layers[-1] + input_size, lenoutput))
+        
+        
+#         self.layers = nn.ModuleList(layers)
+#         self.activation_fn = activation_fn
+        
+#     def forward(self, x):
+#         inputs = x
+#         # First layer is handled separately
+#         x = self.activation_fn(self.layers[0](x))
+        
+#         # From the second layer onwards
+#         for layer in self.layers[1:-1]:
+#             x = self.activation_fn(layer(torch.cat((x, inputs), dim=-1)))
+        
+#         # Last layer
+#         return self.layers[-1](torch.cat((x, inputs), dim=-1))
 
 
 class CustomKinematicNet(nn.Module):
     def __init__(self, input_size, hidden_layers, lenoutput, activation_fn=F.relu):
-        """
-        Args:
-        - input_size (int): Size of the input layer.
-        - hidden_layers (list of int): Sizes of each hidden layer.
-        - lenoutput (int): Size of the output layer.
-        - activation_fn (callable): Activation function to use.
-        """
         super(CustomKinematicNet, self).__init__()
         
-        # Create the list of layers
-        layers = [nn.Linear(input_size, hidden_layers[0])]
-        for i in range(len(hidden_layers) - 1):
-            layers.append(nn.Linear(hidden_layers[i], hidden_layers[i + 1]))
-        layers.append(nn.Linear(hidden_layers[-1], lenoutput))
+        layers = []
+        for i in range(len(hidden_layers)):
+            # Check if this is a layer where we reintroduce the inputs
+            if (i % 3 == 0) and (i != 0):
+                in_features = hidden_layers[i-1] + input_size
+            else:
+                in_features = hidden_layers[i-1] if i > 0 else input_size
+            out_features = hidden_layers[i]
+            layers.append(nn.Linear(in_features, out_features))
+        
+        # Adjusting the input size for the final layer
+        if len(hidden_layers) % 3 == 0:
+            layers.append(nn.Linear(hidden_layers[-1] + input_size, lenoutput))
+        else:
+            layers.append(nn.Linear(hidden_layers[-1], lenoutput))
         
         self.layers = nn.ModuleList(layers)
         self.activation_fn = activation_fn
         
     def forward(self, x):
-        for layer in self.layers[:-1]:
-            x = self.activation_fn(layer(x))
+        inputs = x
+        for idx, layer in enumerate(self.layers[:-1]):
+            if (idx % 3 == 0) and (idx != 0):
+                x = self.activation_fn(layer(torch.cat((x, inputs), dim=-1)))
+            else:
+                x = self.activation_fn(layer(x))
+        
+        # Check if the output layer needs the original inputs
+        if (len(self.layers) - 1) % 3 == 0:
+            return self.layers[-1](torch.cat((x, inputs), dim=-1))
         return self.layers[-1](x)
-    
+
+
+
+
 
 
 
@@ -127,6 +201,7 @@ class CustomKinematicNet(nn.Module):
 
 
 def custom_loss(y_pred, y_true):
+    # print("y_pred:", y_pred.shape)
     se_loss = (y_pred - y_true) ** 2
     MSE_loss = torch.zeros_like(se_loss)  # Initialize with zeros
     
@@ -171,11 +246,12 @@ def custom_loss(y_pred, y_true):
 # hidden_layers=[64,72,82,92,102,112,122,132,142,132,122,112,102,92,82,72,64]
 # hidden_layers=[64,72,82,92,102,112,122,132,142,132,102,92,82]
 
-model = CustomKinematicNet(input_size=input_dim, hidden_layers=hidden_layers, lenoutput=output_dim, activation_fn=F.tanh)
+model = CustomKinematicNet(input_size=input_dim, hidden_layers=hidden_layers, lenoutput=output_dim, activation_fn=F.relu)
 model.to(device)
 
 # %%
-out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+# out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+# out_feats=['deltaphi', 'deltaeta']
 
 df_outfeats=[]
 for i, feat in enumerate(out_feats):
@@ -185,9 +261,8 @@ for i, feat in enumerate(out_feats):
     else:
         df_outfeats.append(feat +"_MSE")
 
-losses_cols=['train_loss', 'val_loss']+df_outfeats
+losses_cols=['train_loss']+df_outfeats
 
-print(losses_cols)
 
 
 
@@ -195,7 +270,7 @@ optimizer=torch.optim.AdamW(model.parameters(), lr=0.0001)
 # loss_fn=nn.MSELoss()
 
 
-out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+# out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
 
 df_outfeats=[]
 for i, feat in enumerate(out_feats):
@@ -205,14 +280,16 @@ for i, feat in enumerate(out_feats):
     else:
         df_outfeats.append(feat +"_MSE")
 
-losses_cols=['train_loss', 'val_loss']+df_outfeats
+losses_cols=['train_loss']+df_outfeats
+# print(losses_cols)
 losses_df=pd.DataFrame(columns=losses_cols)
-losses_train_df=pd.DataFrame(columns=df_outfeats)
+# losses_train_df=pd.DataFrame(columns=df_outfeats)
 
 
 numepochs=10000
 best_loss=np.inf
 for epoch in range(numepochs):
+    validationrun=False
     model.train()
     train_loss=0
     train_featsloss_list=[]
@@ -227,51 +304,60 @@ for epoch in range(numepochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+    
+    if train_loss/len(train_loader)<best_loss:
+        best_loss=train_loss/len(train_loader)
+        modelsave=deepcopy(model.state_dict())
+        torch.save(modelsave, modelsavepath)
+        patience=100
+    else:
+        patience-=1
+        if patience==0:
+            print('early stopping')
+            break
     train_featsloss_array = np.array(train_featsloss_list)
     avg_train_featsloss = np.mean(train_featsloss_array, axis=0)
     
-    model.eval()
+    
     # patience=20
-    with torch.no_grad():
-        x,y=next(iter(val_loader))
-        # x=val_loader
-        x=x.to(device)
-        y=y.to(device)
-        y_pred=model(x)
-        feats_loss, valloss = custom_loss(y_pred, y)
-        # valloss=sum(feats_loss)/len(feats_loss)
-        
-
-        if valloss<best_loss:
-            best_loss=valloss
-            patience=100
-            modelsave=deepcopy(model.state_dict())
-            torch.save(modelsave, modelsavepath)
-        else:
-            patience-=1
-            if patience==0:
-                print('early stopping')
-                break
+    if epoch%5==0:
+        model.eval()
+        with torch.no_grad():
+            x,y=next(iter(val_loader))
+            # x=val_loader
+            x=x.to(device)
+            y=y.to(device)
+            y_pred=model(x)
+            feats_loss, valloss = custom_loss(y_pred, y)
+            validationrun=True
+            # print("validation loss:", valloss.item())
+            # valloss=sum(feats_loss)/len(feats_loss)
+            
     # indice=[3,6,12]
     # for idx in indice:
     #     feats_loss[idx]=feats_loss[idx].cpu().float()
     
-    loss_strings = [f"{df_outfeats[i]}: {feats_loss[i]:.4e}" for i in range(len(df_outfeats))]
-    loss_summary = ", ".join(loss_strings)
-    loss_values = [train_loss/len(train_loader), valloss.item()]
-    loss_values.extend(feats_loss)
 
+    loss_strings = [f"{df_outfeats[i]}: {avg_train_featsloss[i]:.4e}" for i in range(len(df_outfeats))]
+    loss_summary = ", ".join(loss_strings)
+    loss_values = [train_loss/len(train_loader)]
+    loss_values.extend(avg_train_featsloss)
+
+    # print(len(loss_values))
     losses_df.loc[epoch] = loss_values
     losses_df.to_csv(pdsavepath)
 
-    losses_train_df.loc[epoch] = avg_train_featsloss
-    losses_train_df.to_csv(pd_train_savepath)
+    # losses_train_df.loc[epoch] = avg_train_featsloss
+    # losses_train_df.to_csv(pd_train_savepath)
     
 
 
     # print(f"epoch: {epoch}, train: {train_loss/len(train_loader):.4e}, val: {valloss.item():.4e}, {loss_summary}")
     # print("train loss features:", avg_train_featsloss)
-    print(f"epoch: {epoch}, train: {train_loss/len(train_loader):.4e}, val: {valloss.item():.4e}")
+    if validationrun:
+        print(f"epoch: {epoch}, train: {train_loss/len(train_loader):.4e}, val: {valloss.item():.4e}")
+    else:
+        print(f"epoch: {epoch}, train: {train_loss/len(train_loader):.4e}")
 
     # valloss=valloss.cpu().float()
     # valloss2=valloss.item()

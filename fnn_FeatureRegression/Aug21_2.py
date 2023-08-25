@@ -18,16 +18,23 @@ from pair_nomet_creation_temp import KinematicDataset, EpochSampler
 
 
 # %%
-modelsavepath='/home/ddemler/HNLclassifier/saved_files/saved_models/FNN_FeatureRegression/fnn_aug18_adamw_nomse.pt'
-pdsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug18_adamw_nomse2.csv'
-pd_train_savepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug21_adamw_nomse2_train.csv'
+modelsavepath='/home/ddemler/HNLclassifier/saved_files/saved_models/FNN_FeatureRegression/fnn_aug21_2_1.pt'
+pdsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug21_2_1.csv'
+pd_train_savepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/fnn_aug21_2_1.csv'
 
 out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
 tryrel=[ 'mt','mass', 'pt', 'px', 'py', 'pz', 'energy']
+
+out_feats=out_feats[5:8]
+
 customlossindices=[idx for idx, feat in enumerate(out_feats) if feat in tryrel]
 
+
+
+
+
 # hidden_layers = [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
-hidden_layers = [64 for i in range(20)]
+hidden_layers = [32 for i in range(20)]
 
 
 
@@ -50,21 +57,10 @@ input_dim, output_dim = val_dataset.usefulvariables()
 
 val_sampler = EpochSampler(val_dataset)
 
-val_loader = DataLoader(val_dataset, batch_size=320, sampler=val_sampler)
+val_loader = DataLoader(val_dataset, batch_size=100_000, sampler=val_sampler)
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-class KinematicNet(nn.Module):
-    def __init__(self):
-        super(KinematicNet, self).__init__()
-        self.fc1 = nn.Linear(input_dim, int(input_dim*1.5))
-        self.fc2 = nn.Linear(int(input_dim*1.5), int(input_dim//3))
-        self.fc3 = nn.Linear(int(input_dim//3), output_dim)
-        
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return self.fc3(x)
 
 
 class CustomKinematicNet(nn.Module):
@@ -175,7 +171,8 @@ model = CustomKinematicNet(input_size=input_dim, hidden_layers=hidden_layers, le
 model.to(device)
 
 # %%
-out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+# out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+# out_feats=['deltaphi', 'deltaeta']
 
 df_outfeats=[]
 for i, feat in enumerate(out_feats):
@@ -191,11 +188,11 @@ print(losses_cols)
 
 
 
-optimizer=torch.optim.AdamW(model.parameters(), lr=0.0001)
+optimizer=torch.optim.AdamW(model.parameters(), lr=0.0003)
 # loss_fn=nn.MSELoss()
 
 
-out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
+# out_feats=['deltaphi', 'deltaeta', 'deltaR', 'mt', 'norm_mt', 'mass', 'pt', 'eta' , 'phi',  'px', 'py', 'pz', 'energy']
 
 df_outfeats=[]
 for i, feat in enumerate(out_feats):

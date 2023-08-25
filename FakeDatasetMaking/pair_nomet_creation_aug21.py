@@ -175,8 +175,8 @@ class KinematicDataset(Dataset):
         # labels=np.vstack((output_half, output_half))
 
         # labels= labels[:,0:2] #! changed to test if still works on small number
-        labels= output_half[:,5:8] #! changed to test if still works on small number
-
+        # labels= output_half[:,5:8] #! changed to test if still works on small number
+        labels = output_half
         # for i in range(output_half.shape[1]):
         #     print("min, max, median, std of index", i, np.min(output_half[:,i]), np.max(output_half[:,i]), np.median(output_half[:,i]), np.std(output_half[:,i]))
 
