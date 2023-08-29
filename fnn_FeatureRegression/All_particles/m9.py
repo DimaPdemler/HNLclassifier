@@ -29,7 +29,7 @@ train_dataset = BatchedFakeParticleDataset_All(batch_size=train_batch_size, leng
 
 train_dataloader = DataLoader(train_dataset, batch_size=None, shuffle=False, num_workers=8)
 
-val_dataset = BatchedFakeParticleDataset_All(batch_size=1000, length=500_000)
+val_dataset = BatchedFakeParticleDataset_All(batch_size=50000, length=1_000_000)
 val_dataloader = DataLoader(val_dataset, batch_size=None, shuffle=False, num_workers=2)
 
 
@@ -117,8 +117,8 @@ def custom_loss(y_pred, y_true):
 
 # %%
 model = CustomKinematicNet(input_dim, hidden_layers, output_dim, activation_fn=activation)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0006)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=200, factor=0.5, verbose=True)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=25, factor=0.5, verbose=True)
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 model.to(device)

@@ -12,6 +12,10 @@ from kinematic_custom import *
 import pickle
 import yaml
 
+# sys.path.append('/home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles')
+# /home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles/threshold_limits.yaml
+
+
 # %%
 functions =[
                     deltaphi, deltaphi, deltaphi, 
@@ -197,7 +201,7 @@ def load_thresholds_from_yaml(filename):
     
     return lower_thresholds, upper_thresholds
 
-lower_thresholds, upper_thresholds = load_thresholds_from_yaml('threshold_limits.yaml')
+lower_thresholds, upper_thresholds = load_thresholds_from_yaml('/home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles/threshold_limits.yaml')
 
 
 def remove_outliers(data):

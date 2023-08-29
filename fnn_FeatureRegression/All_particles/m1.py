@@ -16,8 +16,12 @@ import pickle
 
 activation=F.relu
 hidden_layers = [512 for i in range(20)]
-prefix='m1'
+prefix='m1_1'
 
+lr_start=1e-3
+lr_patience= 10
+lr_factor=0.3
+patience= 200
 
 train_batch_size = 320
 dfpath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/all_data/wt_' + prefix + '_losses.csv'
@@ -25,11 +29,11 @@ modelsavepath='/home/ddemler/HNLclassifier/saved_files/fnn_featregr/all_data/wt_
 
 # %%
 
-train_dataset = BatchedFakeParticleDataset_All(batch_size=train_batch_size, length=1_000_000)
+train_dataset = BatchedFakeParticleDataset_All(batch_size=train_batch_size, length=2_000_000)
 
 train_dataloader = DataLoader(train_dataset, batch_size=None, shuffle=False, num_workers=8)
 
-val_dataset = BatchedFakeParticleDataset_All(batch_size=1000, length=500_000)
+val_dataset = BatchedFakeParticleDataset_All(batch_size=1000, length=2_000_000)
 val_dataloader = DataLoader(val_dataset, batch_size=None, shuffle=False, num_workers=2)
 
 
@@ -117,8 +121,8 @@ def custom_loss(y_pred, y_true):
 
 # %%
 model = CustomKinematicNet(input_dim, hidden_layers, output_dim, activation_fn=activation)
-optimizer = torch.optim.AdamW(model.parameters(), lr=0.0004)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=100, factor=0.5, verbose=True)
+optimizer = torch.optim.AdamW(model.parameters(), lr=lr_start)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=lr_patience, factor=lr_factor, verbose=True)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
@@ -177,10 +181,10 @@ if __name__ == "__main__":
                 min_loss=val_loss
                 torch.save(model.state_dict(), modelsavepath)
                 best_modelchanged=True
-                patience=100
+                patience_curr=patience
             else:
-                patience-=1
-                if patience==0:
+                patience_curr-=1
+                if patience_curr==0:
                     print("Early stopping!!", epoch)
                     break
         old_lr = optimizer.param_groups[0]['lr']

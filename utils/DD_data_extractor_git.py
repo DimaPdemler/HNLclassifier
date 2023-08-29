@@ -1,5 +1,5 @@
 # from kinematic import *
-from DDkinematic_final import *
+# from DDkinematic_final import *
 from uproot import open
 from os import listdir
 from fnmatch import filter
@@ -17,6 +17,14 @@ from pandas import DataFrame
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 import os
+import sys
+sys.path.append('/home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles/')
+# from kinematic_custom import p4_calc, motherpair_vals, Energy_tot
+from kinematic_custom import *
+
+# /home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles/kinematic_custom.py
+
+# p4calc, motherpair_vals, Energy_tot
 
 # np.random.seed(39)
 # np.rand
@@ -37,7 +45,7 @@ output_vars_v4 = ['event', 'genWeight',
                   'pt_1', 'pt_2', 'pt_3', 'pt_MET', 
                   'eta_1', 'eta_2', 'eta_3',
                   'mass_1', 'mass_2', 'mass_3',
-                  'phi_1', 'phi_2', 'phi_3',
+                  'phi_1', 'phi_2', 'phi_3', 'phi_MET', 
                   'deltaphi_12', 'deltaphi_13', 'deltaphi_23', 
                   'deltaphi_1MET', 'deltaphi_2MET', 'deltaphi_3MET',
                   ['deltaphi_1(23)', 'deltaphi_2(13)', 'deltaphi_3(12)', 
@@ -62,6 +70,40 @@ output_vars_v4 = ['event', 'genWeight',
 				  ['HNL_CM_mass_with_MET_1', 'HNL_CM_mass_with_MET_2'], 
                   ['W_CM_angle_12','W_CM_angle_13', 'W_CM_angle_23', 'W_CM_angle_1MET', 'W_CM_angle_2MET', 'W_CM_angle_3MET'],
                   'n_tauh']
+
+output_vars_v5 = ['event', 'genWeight', 
+                  'charge_1', 'charge_2', 'charge_3', 
+                  'pt_1', 'pt_2', 'pt_3', 'pt_MET', 
+                  'eta_1', 'eta_2', 'eta_3',
+                  'mass_1', 'mass_2', 'mass_3',
+                  'phi_1', 'phi_2', 'phi_3', 'phi_MET', 
+                  'deltaphi_12', 'deltaphi_13', 'deltaphi_23', 
+                  'deltaphi_1MET', 'deltaphi_2MET', 'deltaphi_3MET',
+                  ['deltaphi_1(23)', 'deltaphi_2(13)', 'deltaphi_3(12)', 
+                  'deltaphi_MET(12)', 'deltaphi_MET(13)', 'deltaphi_MET(23)',
+                  'deltaphi_1(2MET)', 'deltaphi_1(3MET)', 'deltaphi_2(1MET)', 'deltaphi_2(3MET)', 'deltaphi_3(1MET)', 'deltaphi_3(2MET)'],
+                  'deltaeta_12', 'deltaeta_13', 'deltaeta_23', 
+                  ['deltaeta_1(23)', 'deltaeta_2(13)', 'deltaeta_3(12)'],
+                  'deltaR_12', 'deltaR_13', 'deltaR_23', 
+                  ['deltaR_1(23)', 'deltaR_2(13)', 'deltaR_3(12)'],
+                  'pt_123',
+                  'mt_12', 'mt_13', 'mt_23', 
+                  'mt_1MET', 'mt_2MET', 'mt_3MET',
+                  ['mt_1(23)', 'mt_2(13)', 'mt_3(12)',
+                  'mt_MET(12)', 'mt_MET(13)', 'mt_MET(23)',
+                  'mt_1(2MET)', 'mt_1(3MET)', 'mt_2(1MET)', 'mt_2(3MET)', 'mt_3(1MET)', 'mt_3(2MET)'],
+                  'mass_12', 'mass_13', 'mass_23',
+                  'mass_123',
+                  'Mt_tot',
+                  ['HNL_CM_angle_with_MET_1', 'HNL_CM_angle_with_MET_2', 'HNL_CM_angle_with_MET_3'], 
+                  ['W_CM_angle_to_plane_1', 'W_CM_angle_to_plane_2', 'W_CM_angle_to_plane_3'], ['W_CM_angle_to_plane_with_MET_1', 'W_CM_angle_to_plane_with_MET_2', 'W_CM_angle_to_plane_with_MET_3'],
+                  ['HNL_CM_mass_1', 'HNL_CM_mass_2', 'HNL_CM_mass_3'], 
+				  ['HNL_CM_mass_with_MET_1', 'HNL_CM_mass_with_MET_2', 'HNL_CM_mass_with_MET_3'], 
+                  ['W_CM_angle_12','W_CM_angle_13', 'W_CM_angle_23', 'W_CM_angle_1MET', 'W_CM_angle_2MET', 'W_CM_angle_3MET'],
+                  'n_tauh',
+                  ['px_1', 'py_1', 'pz_1', 'E_1', 'px_2', 'py_2', 'pz_2', 'E_2', 'px_3', 'py_3', 'pz_3', 'E_3'],
+                  ['moth_mass_12', 'moth_mass_13', 'moth_mass_23', 'moth_pt_12', 'moth_pt_13', 'moth_pt_23', 'moth_eta_12', 'moth_eta_13', 'moth_eta_23', 'moth_phi_12', 'moth_phi_13', 'moth_phi_23', 'moth_px_12', 'moth_px_13', 'moth_px_23', 'moth_py_12', 'moth_py_13', 'moth_py_23', 'moth_pz_12', 'moth_pz_13', 'moth_pz_23', 'moth_E_12', 'moth_E_13', 'moth_E_23'],
+                  'E_tot']
 
 
 #===================================================================================================
@@ -370,7 +412,7 @@ class Data_extractor_v4(Data_extractor):
                     None, None, None, None,     # pts
                     None, None, None,           # etas
                     None, None, None,           # masses
-                    None, None, None,          # phis
+                    None, None, None, None,         # phis
                     deltaphi, deltaphi, deltaphi, 
                     deltaphi, deltaphi, deltaphi,
                     deltaphi3,
@@ -401,7 +443,7 @@ class Data_extractor_v4(Data_extractor):
 			        ['1_pt'], ['2_pt'], ['3_pt'], ['MET_pt'],
 			        ['1_eta'], ['2_eta'], ['3_eta'], 
 			        ['1_mass'], ['2_mass'], ['3_mass'],
-                    ['1_phi'], ['2_phi'], ['3_phi'],
+                    ['1_phi'], ['2_phi'], ['3_phi'], ['MET_phi'],
 			        ['1_phi', '2_phi'], ['1_phi', '3_phi'], ['2_phi', '3_phi'], 
 			        ['1_phi', 'MET_phi'], ['2_phi', 'MET_phi'], ['3_phi', 'MET_phi'], 
 			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
@@ -422,6 +464,76 @@ class Data_extractor_v4(Data_extractor):
 			        ['1_charge', '2_charge', '3_charge', '1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
 			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
 			        ['channel', '1_genPartFlav', '2_genPartFlav', '3_genPartFlav']]
+        super().__init__(channel, raw_vars_general=raw_vars_general, raw_vars_lepton1=raw_vars_lepton1, raw_vars_lepton2=raw_vars_lepton2, 
+                         raw_vars_lepton3=raw_vars_lepton3, output_vars=output_vars, functions=functions, input_vars=input_vars)
+
+class Data_extractor_v5(Data_extractor):
+    def __init__(self, channel):
+        output_vars = deepcopy(output_vars_v5)
+        functions =[None, None,                 # event, genWeight
+                    None, None, None,           # charges
+                    None, None, None, None,     # pts
+                    None, None, None,           # etas
+                    None, None, None,           # masses
+                    None, None, None, None,         # phis
+                    deltaphi, deltaphi, deltaphi, 
+                    deltaphi, deltaphi, deltaphi,
+                    deltaphi3,
+                    deltaeta, deltaeta, deltaeta, 
+                    deltaeta3,
+                    deltaR, deltaR, deltaR, 
+                    deltaR3,
+                    sum_pt, 
+                    transverse_mass, transverse_mass, transverse_mass, 
+                    transverse_mass, transverse_mass, transverse_mass,
+                    transverse_mass3,
+                    invariant_mass, invariant_mass, invariant_mass,
+                    invariant_mass,
+                    total_transverse_mass, 
+                    HNL_CM_angles_with_MET, 
+                    W_CM_angles_to_plane, W_CM_angles_to_plane_with_MET,
+			        HNL_CM_masses,
+                    HNL_CM_masses_with_MET, 
+                    W_CM_angles,
+                    count_tauh,
+                    p4calc,
+                    motherpair_vals,
+                    Energy_tot]
+        raw_vars_general = ['event', 'genWeight', 'MET_pt', 'MET_phi']
+        lepton_specific = ['_eta', '_mass', '_phi', '_pt', '_charge', '_genPartFlav']
+        raw_vars_lepton1 = lepton_specific
+        raw_vars_lepton2 = lepton_specific
+        raw_vars_lepton3 = lepton_specific
+        input_vars = [['event'], ['genWeight'], 
+			        ['1_charge'], ['2_charge'], ['3_charge'], 
+			        ['1_pt'], ['2_pt'], ['3_pt'], ['MET_pt'],
+			        ['1_eta'], ['2_eta'], ['3_eta'], 
+			        ['1_mass'], ['2_mass'], ['3_mass'],
+                    ['1_phi'], ['2_phi'], ['3_phi'], ['MET_phi'],
+			        ['1_phi', '2_phi'], ['1_phi', '3_phi'], ['2_phi', '3_phi'], 
+			        ['1_phi', 'MET_phi'], ['2_phi', 'MET_phi'], ['3_phi', 'MET_phi'], 
+			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        ['1_eta', '2_eta'], ['1_eta', '3_eta'], ['2_eta', '3_eta'], 
+			        ['1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        ['1_eta', '2_eta', '1_phi', '2_phi'], ['1_eta', '3_eta', '1_phi', '3_phi'], ['2_eta', '3_eta', '2_phi', '3_phi'], 
+			        ['1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        [['1_pt', '2_pt', '3_pt'],['1_phi', '2_phi', '3_phi'],['1_eta', '2_eta', '3_eta'], ['1_mass', '2_mass', '3_mass']], 
+			        ['1_pt', '2_pt', '1_phi', '2_phi'], ['1_pt', '3_pt', '1_phi', '3_phi'], ['2_pt', '3_pt', '2_phi', '3_phi'],
+			        ['1_pt', 'MET_pt', '1_phi', 'MET_phi'], ['2_pt', 'MET_pt', '2_phi', 'MET_phi'], ['3_pt', 'MET_pt', '3_phi', 'MET_phi'],
+			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        [['1_pt', '2_pt'],['1_phi', '2_phi'],['1_eta', '2_eta'], ['1_mass', '2_mass']], [['1_pt', '3_pt'],['1_phi', '3_phi'],['1_eta', '3_eta'], ['1_mass', '3_mass']], [['2_pt', '3_pt'],['2_phi', '3_phi'],['2_eta', '3_eta'], ['2_mass', '3_mass']], 	
+                    [['1_pt', '2_pt', '3_pt'],['1_phi', '2_phi', '3_phi'],['1_eta', '2_eta', '3_eta'], ['1_mass', '2_mass', '3_mass']], 
+			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi'],
+			        [ '1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        [ '1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'], ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        [ '1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'], 
+			        [ '1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        ['1_pt', '2_pt', '3_pt', 'MET_pt', '1_phi', '2_phi', '3_phi', 'MET_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+			        ['channel', '1_genPartFlav', '2_genPartFlav', '3_genPartFlav'],
+                    ['1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+                    ['1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass'],
+                    ['1_pt', '2_pt', '3_pt', '1_phi', '2_phi', '3_phi', '1_eta', '2_eta', '3_eta', '1_mass', '2_mass', '3_mass', 'MET_pt']
+                    ]
         super().__init__(channel, raw_vars_general=raw_vars_general, raw_vars_lepton1=raw_vars_lepton1, raw_vars_lepton2=raw_vars_lepton2, 
                          raw_vars_lepton3=raw_vars_lepton3, output_vars=output_vars, functions=functions, input_vars=input_vars)
 

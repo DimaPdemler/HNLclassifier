@@ -118,7 +118,7 @@ def custom_loss(y_pred, y_true):
 # %%
 model = CustomKinematicNet(input_dim, hidden_layers, output_dim, activation_fn=activation)
 optimizer = torch.optim.AdamW(model.parameters(), lr=0.0004, betas=(0.99,0.999))
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=100, factor=0.5, verbose=True)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=25, factor=0.2, verbose=True)
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 model.to(device)
