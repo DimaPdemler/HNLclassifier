@@ -27,6 +27,7 @@ def process_dataframe(df, flat_features):
 
     # Rename 'weightOriginal' to 'genWeight' in flat_features
     flat_features = ['genWeight' if feature=='weightOriginal' else feature for feature in flat_features]
+    
 
     # Iterate over each unique channel name in the dictionary
     for channel_name, channel_number in channel_mapping.items():
@@ -47,7 +48,8 @@ def process_dataframe(df, flat_features):
 
                 if feature == 'genWeight':
                     # Rename 'weightOriginal' to 'genWeight' in the dataframe
-                    signal_label_data[feature] = signal_label_df['weightOriginal'].to_numpy()
+                    # signal_label_data[feature] = signal_label_df['weightOriginal'].to_numpy()
+                    signal_label_data[feature] = signal_label_df['genWeight'].to_numpy()
                 else:
                     signal_label_data[feature] = signal_label_df[feature].to_numpy()
 
@@ -391,6 +393,9 @@ def binmaker_rightleft(channel_specific_dict, xvariable, masshyp, X=0.3,  plot=F
     background_error=np.sqrt(np.array(background_weights_squared_list))
     return bin_indices, signal_height, background_height, np.flip(signal_error), np.flip(background_error)
 
+# def get_transfer_score_dict(data_dict, model_class
+
+
 def get_dnn_score_dict_torch_simple(data_dict_dnn, model_class, vars_list,masshyp, scaler=None):
     """
     Given a dictionary containing data for various channels and a deep learning model, this method computes the model's
@@ -446,6 +451,7 @@ def get_dnn_score_dict_torch_simple(data_dict_dnn, model_class, vars_list,masshy
         dict_copy[channel]['signal']['scores']=scores[len(data_background):].flatten()
 
     return dict_copy
+
 
 
 def bin_uncertainty2(signal_height, background_height, sig_std, back_std, significance):
@@ -550,7 +556,10 @@ def find_significance2(data, channels, xvariable, masshyp, model_name, model_cla
     significance_pd=pd.DataFrame(columns=channels)
     uncertainty_pd=pd.DataFrame(columns=channels)
 
+
+
     dnn_score_dict=get_dnn_score_dict_torch_simple(data,model_class, vars_list,masshyp, scaler=scaler)
+
     
     for channel in tqdm(channels, desc='channel find_significance2, masshyp:' + str(masshyp), disable=True):
         try:
@@ -669,6 +678,9 @@ def plot_average_significance_withpd(data, xvariables, model_info_df, binmakers,
                 ax.plot(mass_hyp_values, avg_scores, label=f'{save_name}, average ({xvariable}, {binmakertype})')
                 if not hide_errorbars:
                     ax.fill_between(mass_hyp_values, np.subtract(avg_scores, avg_uncertainties), np.add(avg_scores, avg_uncertainties), alpha=0.2)
+            
+                print("average significance for", xvariable, ":", avg_scores)
+                print("average uncertainty for", xvariable, ":", avg_uncertainties)
                 
 
     if print_AUC:
@@ -681,6 +693,7 @@ def plot_average_significance_withpd(data, xvariables, model_info_df, binmakers,
     ax.set_ylabel('Average significance')
     ax.set_title('Average significance vs mass hypothesis for different xvariables and binmakers')
     ax.set_xscale('log')
+    ax.grid()
     ax.set_yscale('log')
 
     handles, labels = ax.get_legend_handles_labels()
@@ -688,7 +701,7 @@ def plot_average_significance_withpd(data, xvariables, model_info_df, binmakers,
 
     # Hide the axes of the legend
     legend_ax.axis('off')
-
+    # plt.grid()
     # Adjust subplot parameters and then call tight_layout
     plt.subplots_adjust(bottom=-1)  # Adjust this value to suit your needs
     plt.tight_layout()

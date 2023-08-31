@@ -18,7 +18,7 @@ from torch.nn.utils import prune
 
 # %%
 
-activation=F.leaky_relu
+activation=F.relu
 hidden_layers = [512 for i in range(20)]
 prefix='n5'
 
@@ -77,8 +77,7 @@ class CustomKinematicNet(nn.Module):
         self.layers = nn.ModuleList(layers)
 
         for layer in self.layers:
-            # Apply He Initialization
-            nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
+            nn.init.uniform_(layer.weight, -0.1, 0.1)  # Initialize weights to small values between -0.1 and 0.1
             if layer.bias is not None:
                 nn.init.constant_(layer.bias, 0)
 
@@ -92,6 +91,11 @@ class CustomKinematicNet(nn.Module):
                 x = self.activation_fn(layer(torch.cat((x, inputs), dim=-1)))
             else:
                 x = self.activation_fn(layer(x))
+        # for idx, layer in enumerate(self.layers[:-1]):
+        #     x2 = layer(x)
+        #     if torch.isinf(x2).any() or torch.isnan(x2).any():
+        #         print(f"Infinite or NaN values found at layer {idx}")
+
         
         # Check if the output layer needs the original inputs
         if (len(self.layers) - 1) % 3 == 0:
@@ -121,39 +125,73 @@ class CustomKinematicNet(nn.Module):
 #     full_loss = torch.sum(full_loss)
 #     return loss_list, full_loss
 
-import torch
+# def custom_loss(y_pred, y_true, output_dim = output_dim):
+#     # Clip the values for numerical stability
+#     # y_pred = torch.clamp(y_pred, -clip_value, clip_value)
+#     # y_true = torch.clamp(y_true, -clip_value, clip_value)
+    
+#     # Log cosh loss for all features
+#     log_cosh_loss = torch.log(torch.cosh(y_pred - y_true) + 1e-8)  # small constant added for numerical stability
+    
+#     num_features = int(output_dim)
+    
+#     # Relative log cosh loss for the last feature
+#     relative_term = (y_pred[:, num_features - 1] - y_true[:, num_features - 1]) / (y_true[:, num_features - 1] + 1e-8)  # small constant added for numerical stability
+#     relative_log_cosh_loss_last_feature = torch.log(torch.cosh(relative_term) + 1e-8)  # small constant added for numerical stability
+    
+#     # Replace the log cosh loss for the last feature with the relative log cosh loss
+#     log_cosh_loss[:, num_features - 1] = relative_log_cosh_loss_last_feature
+    
+#     # Calculate mean loss for each feature
+#     full_loss = torch.mean(log_cosh_loss, axis=0)
+#     print("max of full_loss: ", torch.mean(full_loss))
+    
+#     # Convert the tensor to numpy array for returning
+#     loss_list = full_loss.detach().cpu().numpy()
+    
+#     # Calculate the total loss as the sum of mean loss across all features
+#     # print("max of full_loss: ", torch.mean(full_loss))
+#     full_loss = torch.mean(full_loss)
+    
+#     return loss_list, full_loss
 
-import torch
+# import torch
 
-def custom_loss(y_pred, y_true, output_dim = output_dim):
-    # Clip the values for numerical stability
-    # y_pred = torch.clamp(y_pred, -clip_value, clip_value)
-    # y_true = torch.clamp(y_true, -clip_value, clip_value)
+def custom_loss(y_pred, y_true):
+    y_pred_np = y_pred.detach().cpu().numpy()
+    y_true_np = y_true.detach().cpu().numpy()
+
+    if np.any(np.isnan(y_pred_np)):
+        print("y_pred has nan")
+    if np.any(np.isnan(y_true_np)):
+        print("y_true has nan")
+    # Compute log-cosh for all features except the last
+    log_cosh_loss = torch.log(torch.cosh(y_pred[:, :-1] - y_true[:, :-1]) + 1e-8)
+    # for i in range(log_cosh_loss.shape[1]):
+    #     print("max of log_cosh_loss: ", torch.max(log_cosh_loss[:,i]))
+
+    maxlist=[max(log_cosh_loss[:,i]) for i in range(log_cosh_loss.shape[1])]
+    print("max of log_cosh_loss: ", max(maxlist))
     
-    # Log cosh loss for all features
-    log_cosh_loss = torch.log(torch.cosh(y_pred - y_true) + 1e-8)  # small constant added for numerical stability
+    # Compute relative loss for the last feature
+    relative_term = (y_pred[:, -1] - y_true[:, -1]) / (torch.abs(y_true[:, -1]) + 1e-8)
+    relative_loss_last_feature = relative_term ** 2  # Using mean squared error as an example
     
-    num_features = int(output_dim)
+    # Concatenate the two losses
+    full_loss = torch.cat([log_cosh_loss, relative_loss_last_feature.unsqueeze(1)], dim=1)
     
-    # Relative log cosh loss for the last feature
-    relative_term = (y_pred[:, num_features - 1] - y_true[:, num_features - 1]) / (y_true[:, num_features - 1] + 1e-8)  # small constant added for numerical stability
-    relative_log_cosh_loss_last_feature = torch.log(torch.cosh(relative_term) + 1e-8)  # small constant added for numerical stability
+    # Compute mean loss across samples for each feature
+    feature_wise_loss = torch.mean(full_loss, dim=0)
     
-    # Replace the log cosh loss for the last feature with the relative log cosh loss
-    log_cosh_loss[:, num_features - 1] = relative_log_cosh_loss_last_feature
+    # Compute the total mean loss across all features
+    total_loss = torch.mean(feature_wise_loss)
     
-    # Calculate mean loss for each feature
-    full_loss = torch.mean(log_cosh_loss, axis=0)
-    print("max of full_loss: ", torch.mean(full_loss))
+    # print("Mean of full_loss:", total_loss.item())
     
-    # Convert the tensor to numpy array for returning
-    loss_list = full_loss.detach().cpu().numpy()
-    
-    # Calculate the total loss as the sum of mean loss across all features
-    # print("max of full_loss: ", torch.mean(full_loss))
-    full_loss = torch.mean(full_loss)
-    
-    return loss_list, full_loss
+    return feature_wise_loss, total_loss
+
+
+
 
 
 
@@ -195,7 +233,7 @@ if __name__ == "__main__":
             loss_list_t, loss = custom_loss(outputs, target)
             loss.backward()
             
-            clip_grad_norm_(model.parameters(), max_norm=1.0)
+            # clip_grad_norm_(model.para /meters(), max_norm=1.0)
 
             optimizer.step()
             total_loss += loss.item()

@@ -18,7 +18,7 @@ from torch.nn.utils import prune
 
 # %%
 
-activation=F.leaky_relu
+activation=F.relu
 hidden_layers = [512 for i in range(20)]
 prefix='n1_2'
 
@@ -128,7 +128,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=lr_start)
 # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=lr_patience, factor=0.3, verbose=True)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98, last_epoch=-1, verbose=False)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 epochs=100000
