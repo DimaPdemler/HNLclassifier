@@ -1,4 +1,4 @@
-hidden_layer_configs: [[20]]
+hidden_layer_configs: [[20], [30,20,30], ]
 save_folder: "simple_dnn"
 save_name: "NAS3"
 scaler_filename: "scaler_FeatureSearch.pkl"

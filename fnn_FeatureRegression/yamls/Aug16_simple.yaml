@@ -1,0 +1,11 @@
+data_name: Aug10_5mil.pkl
+batch_size: 1000
+early_stop_patience: 20
+learning_rate: 0.001
+Local_model: True
+model_save_prefix: fnn_on_aug16_
+
+models:
+  - hidden_layers: [32,32]
+    activation_fn: tanh
+  

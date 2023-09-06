@@ -1,0 +1,18 @@
+data_name: Aug10_5mil.pkl
+batch_size: 1000
+early_stop_patience: 20
+learning_rate: 0.001
+Local_model: True
+model_save_prefix: fnn_on_aug15_
+
+models:
+  - hidden_layers: [32,42,52,64,74,82,74,64,64,50]
+    activation_fn: relu
+  - hidden_layers: [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
+    activation_fn: tanh
+  - hidden_layers: [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
+    activation_fn: relu
+  - hidden_layers: [32,42,52,64,74,82,74,64,64,50]
+    activation_fn: tanh
+  - hidden_layers: [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
+    activation_fn: relu
