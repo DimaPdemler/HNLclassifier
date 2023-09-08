@@ -19,11 +19,12 @@ from torch import load
 
 
 
-
+channel_mapping = {'tee': 0, 'tem': 1, 'tmm': 2, 'tte': 3, 'ttm': 4}
+renamed_old_input_names=['eta_1', 'mass_1', 'phi_1', 'pt_1', 'eta_2', 'mass_2', 'phi_2', 'pt_2', 'eta_3', 'mass_3', 'phi_3', 'pt_3', 'phi_MET', 'pt_MET']
 
 def process_dataframe(df, flat_features):
     channels_data = {}
-    channel_mapping = {'tee': 0, 'tem': 1, 'tmm': 2, 'tte': 3, 'ttm': 4}
+    
 
     # Rename 'weightOriginal' to 'genWeight' in flat_features
     flat_features = ['genWeight' if feature=='weightOriginal' else feature for feature in flat_features]
@@ -395,6 +396,89 @@ def binmaker_rightleft(channel_specific_dict, xvariable, masshyp, X=0.3,  plot=F
 
 # def get_transfer_score_dict(data_dict, model_class
 
+def get_transferLearning_score_dict(data_dict_dnn, model_class, vars_list,masshyp):
+    """
+    Given a dictionary containing data for various channels and a deep learning model, this method computes the model's
+    scores for each event (particle collision). The method also modifies the original dictionary to 
+    include these scores.
+
+    Parameters:
+    data_dict_dnn (dict): A dictionary where each key is a channel and its corresponding value is a nested dictionary 
+                          with keys 'background' and 'signal', each associated with a DataFrame containing features for 
+                          each instance in the corresponding category. 
+    model_name (str): The name of the trained model to load for score calculation.
+    path (str): The directory where the trained model is located.
+    vars_list (list): A list of feature names that the model uses for prediction. 
+                      It should include 'signal_label' and 'weightNorm' but they will be removed inside the function.
+    masshyp (float): The mass hypothesis under consideration.
+    scaler (object, optional): An instance of a preprocessing scaler if the data needs to be scaled. 
+                               The default is None, indicating that no scaling is required.
+
+    Returns:
+    dict: The modified dictionary where each 'background' and 'signal' DataFrame now includes a new 'scores' column 
+          containing the model's scores for each event.
+    """
+
+    
+    dict_copy = deepcopy(data_dict_dnn)
+    vars_list_copy= vars_list.copy()
+    vars_list_copy.remove('signal_label')
+    vars_list_copy.remove('weightNorm')
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model=model_class
+    model.to(device)
+    model.eval()
+    # for channel in  tqdm(dict_copy.keys(), desc='channel', disable=True):
+        
+    #     data_background = pd.DataFrame.from_dict(dict_copy[channel]['background'])
+    #     data_signal = pd.DataFrame.from_dict(dict_copy[channel]['signal'])
+    #     data_background['mass_hyp']=masshyp
+    #     data_all_concat = pd.concat([data_background, data_signal])
+
+    #     # data_all_concat['channel']=channelsd[channel]
+    #     for ch_int in channelsd.values():
+    #         data_all_concat[f'channel_{ch_int}'] = 0
+    #     channel_int = channelsd[channel]
+    #     data_all_concat[f'channel_{channel_int}'] = 1
+    for channel in tqdm(dict_copy.keys(), desc='channel', disable=True):
+            
+        data_background = pd.DataFrame.from_dict(dict_copy[channel]['background'])
+        data_signal = pd.DataFrame.from_dict(dict_copy[channel]['signal'])
+        data_background['mass_hyp'] = masshyp
+        data_all_concat = pd.concat([data_background, data_signal])
+        
+        # Initialize one-hot encoding columns for channels to zero
+        chname=['channel_0', 'channel_1', 'channel_2', 'channel_3', 'channel_4']
+        for ch_int in channel_mapping.values():  # Loop over all possible channel integers
+            data_all_concat[f'channel_{ch_int}'] = 0
+        
+        # Set the column corresponding to the current channel to 1
+        channel_int = channel_mapping[channel]  # Convert channel name to integer
+        data_all_concat[f'channel_{channel_int}'] = 1
+
+        # print("data_all_concat channel shape: ", data_all_concat['channel'].shape)
+        addinputvars=['charge_1', 'charge_2', 'charge_3']+ chname +['n_tauh', 'mass_hyp']
+        additional=data_all_concat[addinputvars]
+        additional=additional.to_numpy()
+
+        pretrained=data_all_concat[renamed_old_input_names]
+        pretrained=pretrained.to_numpy()
+
+        # data_all_concat = data_all_concat[vars_list_copy]
+        data_all_concat = data_all_concat.to_numpy()
+
+        pretrained_input = torch.tensor(pretrained).float().to(device)
+        additional_input = torch.tensor(additional).float().to(device)
+
+        with torch.no_grad():
+            output=model(pretrained_input, additional_input)
+        scores=output.cpu().numpy()
+
+        dict_copy[channel]['background']['scores']=scores[:len(data_background)].flatten()
+        dict_copy[channel]['signal']['scores']=scores[len(data_background):].flatten()
+
+    return dict_copy
 
 def get_dnn_score_dict_torch_simple(data_dict_dnn, model_class, vars_list,masshyp, scaler=None):
     """
@@ -526,7 +610,7 @@ def find_significance(data, channels, xvariable, masshyp, X=0.2, plot=False, bin
 
     return significance_pd, uncertainty_pd
 
-def find_significance2(data, channels, xvariable, masshyp, model_name, model_class, path, vars_list, X=0.2, plot=False, scaler=None, binmakertype='binmaker_rightleft'):
+def find_significance2(data, channels, xvariable, masshyp, model_class, vars_list, X=0.2, scaler=None, binmakertype='binmaker_rightleft', modeltype= 'dnn'):
     """
     Similar to find_significance, but uses a deep learning model to calculate scores, 
     and subsequently the significance and its uncertainty, for a specific mass hypothesis.
@@ -557,8 +641,10 @@ def find_significance2(data, channels, xvariable, masshyp, model_name, model_cla
     uncertainty_pd=pd.DataFrame(columns=channels)
 
 
-
-    dnn_score_dict=get_dnn_score_dict_torch_simple(data,model_class, vars_list,masshyp, scaler=scaler)
+    if modeltype=='dnn':
+        dnn_score_dict=get_dnn_score_dict_torch_simple(data,model_class, vars_list,masshyp, scaler=scaler)
+    elif modeltype=='transfer':
+        dnn_score_dict=get_transferLearning_score_dict(data,model_class, vars_list,masshyp)
 
     
     for channel in tqdm(channels, desc='channel find_significance2, masshyp:' + str(masshyp), disable=True):
