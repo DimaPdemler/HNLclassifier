@@ -16,8 +16,18 @@ from scipy import stats
 from torch.nn.utils import prune
 import yaml
 
+# def set_yaml_filename(filename):
+#     global yaml_filename
+#     yaml_filename = filename
+
+
 script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory where the script is
-yaml_path = os.path.join(script_dir, 'simpleRegressionmodel.yaml')  # Construct the full path to the YAML file
+
+
+
+yaml_path = os.path.join(script_dir, 'bestmodel.yaml')  # Construct the full path to the YAML file
+# yaml_path = os.path.join(script_dir, 'bestmodel.yaml')  # Construct the full path to the YAML file
+parent_path = os.path.dirname(script_dir)
 
 with open(yaml_path, 'r') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
@@ -43,12 +53,13 @@ val_length=config.get('validation_size', 2_000_000)
 test_length=config.get('testing_size', 5_000_000)
 
 dfpath= '../saved_files/fnn_featregr/' + prefix + '/losses.csv'
-print(dfpath)
+# dfpath=os.path.join(parent_path, dfpath)
+# print(dfpath)
 modelsavepath='../saved_files/fnn_featregr/' + prefix + '/model.pt'
 pdfpath='../saved_files/fnn_featregr/' + prefix + '/plots.pdf'
 
 if not os.path.exists('../saved_files/fnn_featregr/' + prefix):
-    os.makedirs('../../saved_files/fnn_featregr/' + prefix)
+    os.makedirs('../saved_files/fnn_featregr/' + prefix)
 
 
 
@@ -69,51 +80,6 @@ val_dataloader = DataLoader(val_dataset, batch_size=None, shuffle=False, num_wor
 input_dim = train_dataset.input_dim
 output_dim = train_dataset.output_dim
 print(input_dim, output_dim)
-
-
-# class CustomKinematicNet(nn.Module):
-#     def __init__(self, input_size, hidden_layers, lenoutput, activation_fn=F.relu):
-#         super(CustomKinematicNet, self).__init__()
-        
-#         layers = []
-#         for i in range(len(hidden_layers)):
-#             # Check if this is a layer where we reintroduce the inputs
-#             if (i % 3 == 0) and (i != 0):
-#                 in_features = hidden_layers[i-1] + input_size
-#             else:
-#                 in_features = hidden_layers[i-1] if i > 0 else input_size
-#             out_features = hidden_layers[i]
-#             layers.append(nn.Linear(in_features, out_features))
-        
-#         # Adjusting the input size for the final layer
-#         if len(hidden_layers) % 3 == 0:
-#             layers.append(nn.Linear(hidden_layers[-1] + input_size, lenoutput))
-#         else:
-#             layers.append(nn.Linear(hidden_layers[-1], lenoutput))
-        
-#         self.layers = nn.ModuleList(layers)
-
-#         for layer in self.layers:
-#             # Apply He Initialization
-#             nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
-#             if layer.bias is not None:
-#                 nn.init.constant_(layer.bias, 0)
-
-
-#         self.activation_fn = activation_fn
-        
-#     def forward(self, x):
-#         inputs = x
-#         for idx, layer in enumerate(self.layers[:-1]):
-#             if (idx % 3 == 0) and (idx != 0):
-#                 x = self.activation_fn(layer(torch.cat((x, inputs), dim=-1)))
-#             else:
-#                 x = self.activation_fn(layer(x))
-        
-#         # Check if the output layer needs the original inputs
-#         if (len(self.layers) - 1) % 3 == 0:
-#             return self.layers[-1](torch.cat((x, inputs), dim=-1))
-#         return self.layers[-1](x)
 
 class CustomKinematicNet(nn.Module):
     def __init__(self, input_size, hidden_layers, lenoutput, activation_fn=F.relu, dropout_p=0.0):
@@ -151,8 +117,6 @@ class CustomKinematicNet(nn.Module):
 
         self.activation_fn = activation_fn
 
-        # for i, layer in enumerate(self.layers):
-        #     print(i, layer)
         
     def forward(self, x):
         inputs = x
@@ -165,9 +129,7 @@ class CustomKinematicNet(nn.Module):
             else:
                 x = self.activation_fn(layer(x))
         
-        # Check if the output layer needs the original inputs
-        # if (len(self.layers) - 1) % 4 == 0:
-        #     return self.layers[-1](torch.cat((x, inputs), dim=-1))
+
         return self.layers[-1](x)
 
 
@@ -427,9 +389,9 @@ if __name__ == "__main__":
             
             # Compute binned statistics (standard deviation)
             bin_stds, bin_edges, binnumber = stats.binned_statistic(feature_label_values,
-                                                                    y_values,
-                                                                    statistic='std',
-                                                                    bins=bins)
+                                                            y_values,
+                                                            statistic='mean',
+                                                            bins=bins)
 
 
             # Compute the uncertainty in standard deviation
@@ -448,9 +410,10 @@ if __name__ == "__main__":
             ax.errorbar(bin_midpoints, bin_stds, xerr=x_errors, yerr=bin_std_uncertainties, fmt='o', capsize=5)
             
             ax.set_yscale('log')
-            ax.set_title(f'{selected_features[idx]}')
-            ax.set_xlabel('True Value')
-            ax.set_ylabel('Standard Deviation')
+            ax.set_title(f'{selected_features[idx]}, relative residuals')
+            ax.set_xlabel('True Value (GeV)')
+            ax.set_xscale('log')
+            ax.set_ylabel('mean of relative residuals')
 
         pdf.savefig(fig)
         plt.close()

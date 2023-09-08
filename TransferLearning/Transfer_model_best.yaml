@@ -1,9 +1,10 @@
 saveprefix: Transfer_model2
 Regressionyaml: simplemodel
 
+# datasetpath: Aug29
 train_datasetpath: /home/ddemler/HNLclassifier/saved_files/extracted_data/TEST10_train1_multitrain_Sep8
-val_datasetpath: /home/ddemler/HNLclassifier/saved_files/extracted_data/TEST10_val_Aug29
-test_datasetpath: /home/ddemler/HNLclassifier/saved_files/extracted_data/TEST10_test_Aug29
+val_datasetpath: /home/ddemler/HNLclassifier/saved_files/extracted_data/TEST10_val1_multitrain_Sep8
+test_datasetpath: /home/ddemler/HNLclassifier/saved_files/extracted_data/TEST10_train2_multitrain_Sep8
 
 dropout: 0.5 # dropout probability, set to 0 if you dont want dropout
 

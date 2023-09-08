@@ -10,8 +10,11 @@ This repository contains several subdirectories, each focusing on a specific asp
 
 1. **SignificancePlotting**: Contains scripts for plotting the significance of signal classification for different kinematic features or trained Feedforward Neural Network (FNN) models.
 2. **FakeDatasetMaking**: Contains scripts for generating fake raw input variables such as eta, phi, and p_t. These values are then used to calculate kinematic features of this fake data.
-3. **DNN**: Contains a script that trains a Deep Neural Network (DNN) and can run a Neural Architecture Search (NAS) on varying depths and widths.
+3. **DNN**: Ctrains a Deep Neural Network (DNN) that takes in both raw input variables and calculated kinematic features. This is based off Nelson Glardons [work](https://github.com/Nelson-00/TP4b).
+.
 4. **utils**: Contains Python scripts that provide utility functions used across different subdirectories of the project.
+5. **FeatureRegression**: DNN model that predicts the calculated kinematic variables of the particles using the raw input data.
+6. **TransferLearning**: Uses transfer learning with the pretrained regression dnn to do HNL classification. 
 
 Additionally, the repository includes the `data_extraction.ipynb` notebook, which is used for data extraction and preprocessing.
 

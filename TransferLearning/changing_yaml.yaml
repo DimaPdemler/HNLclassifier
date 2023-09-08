@@ -1,0 +1,21 @@
+Regressionyaml: bestmodel
+datasetpath: /home/ddemler/HNLclassifier/saved_files/extracted_data/currdata
+dropout: 0.5
+model_patience: 10
+num_epochs: 100
+optimizer: torch.optim.AdamW
+optimizer_params:
+  lr: 0.0002
+  weight_decay: 0.0001
+saveprefix: run_prebuilt_model
+scheduler_factor: 0.5
+scheduler_patience: 3
+trainsplit1: 0.4
+trainsplit2: 0.4
+transfer_activation: F.relu
+transfer_hidden_layers:
+- 128
+- 128
+unfreeze_epoch: 5
+valsplit1: 0.1
+valsplit2: 0.1

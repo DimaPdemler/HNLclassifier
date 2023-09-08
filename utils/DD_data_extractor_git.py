@@ -18,8 +18,7 @@ from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 import os
 import sys
-sys.path.append('/home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles/')
-# from kinematic_custom import p4_calc, motherpair_vals, Energy_tot
+sys.path.append('./FeatureRegression/')
 from kinematic_custom import *
 
 # /home/ddemler/HNLclassifier/fnn_FeatureRegression/All_particles/kinematic_custom.py
@@ -1139,3 +1138,45 @@ def split_dataset2(data, ratio_train = 0.5, ratio_val = 0.1, shuffle = True, pri
 
     return data_train, data_val, data_test
 
+
+def split_dataset_multitrain(data, ratio_train1=0.4, ratio_train2=0.4, ratio_val1=0.1, ratio_val2=0.1, shuffle=True, print_sizes=True):
+    """
+    Input : 
+        - data : dictionary containing the variables of interest for each event
+        - ratio_train1 : percentage of events going in the first train dataset
+        - ratio_train2 : percentage of events going in the second train dataset
+        - ratio_val1 : percentage of events going in the first validation dataset
+        - ratio_val2 : percentage of events going in the second validation dataset
+        - shuffle : if True, the datasets are shuffled
+    Output :
+        - data_train1 : first training dataset as pandas dataframe
+        - data_train2 : second training dataset as pandas dataframe
+        - data_val1 : first validation dataset as pandas dataframe
+        - data_val2 : second validation dataset as pandas dataframe
+    """
+    
+    df = DataFrame.from_dict(data)
+    N = len(df)
+    
+    if shuffle:
+        df = df.sample(frac=1).reset_index(drop=True)
+        
+    data_train1 = df.sample(frac=ratio_train1)
+    df = df.drop(data_train1.index)
+    
+    data_train2 = df.sample(frac=ratio_train2 / (1 - ratio_train1))
+    df = df.drop(data_train2.index)
+    
+    data_val1 = df.sample(frac=ratio_val1 / (1 - ratio_train1 - ratio_train2))
+    df = df.drop(data_val1.index)
+    
+    data_val2 = df
+    
+    if print_sizes:
+        print("Total number of events:", N)
+        print("Train1 set: {:.2f} %".format(100*len(data_train1)/N))
+        print("Train2 set: {:.2f} %".format(100*len(data_train2)/N))
+        print("Validation1 set: {:.2f} %".format(100*len(data_val1)/N))
+        print("Validation2 set: {:.2f} %".format(100*len(data_val2)/N))
+        
+    return data_train1, data_train2, data_val1, data_val2

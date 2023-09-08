@@ -1,0 +1,58 @@
+prefix: n4_3_bestmodel
+
+
+activation: F.relu
+device: cuda:0
+hidden_layers:
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+- 1024
+
+lr_start: 0.0004
+optimizer: torch.optim.Adam
+
+# optimizer params for Adamw
+# optimizer_params:
+#   weight_decay: 0.0001
+
+
+
+patience_model: 150
+training_size: 2000000
+validation_size: 2000000
+testing_size: 5000000
+
+scheduler: exponential
+scheduler_params:
+  gamma: 0.99
+  last_epoch: -1
+  verbose: false
+
+# scheduler: plateau
+# scheduler_params:
+#   lr_patience: 10
+#   factor: 0.5
+  
+train_batch_size: 320

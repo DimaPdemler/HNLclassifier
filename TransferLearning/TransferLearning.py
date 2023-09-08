@@ -24,11 +24,53 @@ sys.path.append(os.path.join(parentdir, 'SignificancePlotting/'))
 from Significance_func import find_significance2, find_significance, bin_uncertainty2,binmaker_rightleft,   error_boolean, binmaker, process_channels, process_dataframe
 from copy import deepcopy
 
-# from ..FeatureRegression import regression_train
+def split_dataset_multitrain(data, ratio_train1=0.4, ratio_train2=0.4, ratio_val1=0.1, ratio_val2=0.1, shuffle=True, print_sizes=True):
+    """
+    Input : 
+        - data : dictionary containing the variables of interest for each event
+        - ratio_train1 : percentage of events going in the first train dataset
+        - ratio_train2 : percentage of events going in the second train dataset
+        - ratio_val1 : percentage of events going in the first validation dataset
+        - ratio_val2 : percentage of events going in the second validation dataset
+        - shuffle : if True, the datasets are shuffled
+    Output :
+        - data_train1 : first training dataset as pandas dataframe
+        - data_train2 : second training dataset as pandas dataframe
+        - data_val1 : first validation dataset as pandas dataframe
+        - data_val2 : second validation dataset as pandas dataframe
+    """
+    
+    df = data
+    N = len(df)
+    
+    if shuffle:
+        df = df.sample(frac=1).reset_index(drop=True)
+        
+    data_train1 = df.sample(frac=ratio_train1)
+    df = df.drop(data_train1.index)
+    
+    data_train2 = df.sample(frac=ratio_train2 / (1 - ratio_train1))
+    df = df.drop(data_train2.index)
+    
+    data_val1 = df.sample(frac=ratio_val1 / (1 - ratio_train1 - ratio_train2))
+    df = df.drop(data_val1.index)
+    
+    data_val2 = df
+    
+    if print_sizes:
+        print("Total number of events:", N)
+        print("Train1 set: {:.2f} %".format(100*len(data_train1)/N))
+        print("Train2 set: {:.2f} %".format(100*len(data_train2)/N))
+        print("Validation1 set: {:.2f} %".format(100*len(data_val1)/N))
+        print("Validation2 set: {:.2f} %".format(100*len(data_val2)/N))
+        
+    return data_train1, data_train2, data_val1, data_val2
 
+if __name__ == '__main__':
+    yaml_path=os.path.join(parentdir, 'TransferLearning/Transfer_model1.yaml')
+else:
+    yaml_path=os.path.join(parentdir, 'TransferLearning/changing_yaml.yaml')
 
-
-yaml_path=os.path.join(parentdir, 'TransferLearning/Transfer_model1.yaml')
 with open(yaml_path, 'r') as f:
     config = yaml.safe_load(f)
 
@@ -41,7 +83,13 @@ tf_optimizer_str = config.get('optimizer', 'torch.optim.AdamW')
 tf_optimizer_params = config.get('optimizer_params', {'lr': 0.001, 'weight_decay': 0.0})
 tf_saveprefix=config.get('saveprefix', 'generic_tfmodel')
 transfermodelsave = os.path.join(parentdir, 'saved_files/transfer_learning/'+tf_saveprefix+'/')
-datasetpath = config.get('datasetpath', 'Aug29')
+dataset_path = config.get('datasetpath', '/home/ddemler/HNLclassifier/saved_files/extracted_data/TEST10_data_multitrain_Sep8')
+trainsplit1 = config.get('trainsplit1', 0.4)
+trainsplit2 = config.get('trainsplit2', 0.4)
+valsplit1 = config.get('valsplit1', 0.1)
+valsplit2 = config.get('valsplit2', 0.1)
+
+
 scheduler_patience = config.get('scheduler_patience', 5)
 scheduler_factor = config.get('scheduler_factor', 0.1)
 unfreeze_epoch = config.get('unfreeze_epoch', 5)
@@ -53,14 +101,26 @@ if not os.path.exists(transfermodelsave):
 
 newmodelsavepath=os.path.join(transfermodelsave, 'model.pt')
 
+
+fulldata=pd.read_pickle(dataset_path)
+traindata, testdata, valdata, _ = split_dataset_multitrain(fulldata, ratio_train1=trainsplit1, ratio_train2=trainsplit2, ratio_val1=valsplit1, ratio_val2=valsplit2, shuffle=True, print_sizes=True)
+
+
+
 data_base_path = os.path.join(parentdir, 'saved_files/extracted_data')
 
-train_datapath = os.path.join(data_base_path, 'TEST10_train_' + datasetpath)
-val_datapath = os.path.join(data_base_path, 'TEST10_val_' + datasetpath)
-test_datapath = os.path.join(data_base_path, 'TEST10_test_' + datasetpath)
+# global override_train_datapath
+# global override_val_datapath
+# global override_test_datapath
 
-traindata = pd.read_pickle(train_datapath)
-valdata = pd.read_pickle(val_datapath)
+# train_datapath = os.path.join(data_base_path, 'TEST10_train_' + datasetpath)
+# val_datapath = os.path.join(data_base_path, 'TEST10_val_' + datasetpath)
+# test_datapath = os.path.join(data_base_path, 'TEST10_test_' + datasetpath)
+
+
+# traindata = pd.read_pickle(train_path)
+# valdata = pd.read_pickle(val_path)
+# testdata = pd.read_pickle(test_path)
 
 renamed_old_input_names=['eta_1', 'mass_1', 'phi_1', 'pt_1', 'eta_2', 'mass_2', 'phi_2', 'pt_2', 'eta_3', 'mass_3', 'phi_3', 'pt_3', 'phi_MET', 'pt_MET']
 additionalinput_vars=['charge_1', 'charge_2', 'charge_3', 'channel','n_tauh', 'mass_hyp']
@@ -142,15 +202,18 @@ pretrained_model= CustomKinematicNet(input_size=14, hidden_layers=hidden_layers,
 pretrained_model.load_state_dict(torch.load(modelsavepath))
 pretrained_model.to(device)
 
-import torchsummary
+# import torchsummary
 
-torchsummary.summary(pretrained_model, input_size=(14,))
+# torchsummary.summary(pretrained_model, input_size=(14,))
 
 class FeatureExtractor(nn.Module):
     def __init__(self, pretrained_model):
         super(FeatureExtractor, self).__init__()
         self.pretrained = pretrained_model
         self.pretrained.layers = self.pretrained.layers[:-1]  # Remove the last layer
+
+        for i, layer in enumerate(self.pretrained.layers):
+            print(i, layer)
 
     def forward(self, x):
         return self.pretrained(x)
@@ -214,6 +277,8 @@ new_hidden_layers=[128, 128]
 new_model = TransferCustomKinematicNet(feature_extractor, additional_input_size=10, new_hidden_layers=new_hidden_layers)
 new_model.to(device)
 # print("hidden layers: ", new_hidden_layers)
+
+
 
 optimizer = eval(tf_optimizer_str)(new_model.parameters(), **tf_optimizer_params)
 criterion = nn.BCELoss()
@@ -296,7 +361,7 @@ for epoch in range(numepochs):
 
     print(f'Epoch {epoch + 1}, Train Loss: {weightedfull_trainloss:.4e}, Val Loss: {val_loss:.4e}, lr: {old_lr:.4e}')
 
-testdata=pd.read_pickle(test_datapath)
+# testdata=pd.read_pickle(test_datapath)
 test_inputdata, test_outputdata=datamaker(testdata)
 ad_test_inputdata, ad_test_outputdata=additional_datamaker(testdata)
 test_inputfull=torch.cat((test_inputdata, ad_test_inputdata), dim=1)
@@ -398,7 +463,7 @@ for channel in pbar:
 #     vars_list_copy.remove('signal_label')
 #     vars_list_copy.remove('weightNorm')
 
-   
+
 #     model=model_class
 #     model.to(device)
 #     model.eval()
@@ -504,3 +569,6 @@ def plotsignificance(All_channel_dict, xvars ):
 
 datacopy=deepcopy(All_channel_dict)
 plotsignificance(datacopy, [ 'Mt_tot', 'scores'])
+
+
+
